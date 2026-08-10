@@ -1,8 +1,36 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
+
+import MainLayout from '@/layouts/MainLayout.vue'
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [],
+  history: createWebHashHistory(),
+
+  routes: [
+    {
+      path: '/',
+      component: MainLayout,
+
+      children: [
+        {
+          path: '',
+          name: 'home',
+          component: () => import('@/views/HomeView.vue'),
+        },
+
+        {
+          path: 'tool',
+          name: 'tool',
+          component: () => import('@/views/ToolView.vue'),
+        },
+
+        {
+          path: 'settings',
+          name: 'settings',
+          component: () => import('@/views/SettingsView.vue'),
+        },
+      ],
+    },
+  ],
 })
 
 export default router
