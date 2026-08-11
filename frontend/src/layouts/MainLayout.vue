@@ -86,11 +86,41 @@ const activeMenu = computed(() => route.path)
   box-sizing: border-box;
 }
 
+.logo {
+  width: 32px;
+  height: 32px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 8px;
+
+  background: #409eff;
+
+  color: white;
+
+  font-size: 16px;
+  font-weight: 600;
+}
+
 .sidebar-menu {
   flex: 1;
 
   min-height: 0;
 
+  border-right: none;
+}
+
+.sidebar-footer {
+  flex-shrink: 0;
+
+  border-top: 1px solid #e5e7eb;
+}
+
+.sidebar-footer :deep(.el-menu) {
   border-right: none;
 }
 
