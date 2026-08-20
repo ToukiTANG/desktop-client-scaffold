@@ -5,7 +5,6 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator
 
-
 # backend/
 BACKEND_DIR = Path(__file__).resolve().parent.parent
 
@@ -30,7 +29,7 @@ CREATE TABLE IF NOT EXISTS person (
 
     specialize_classify INTEGER NOT NULL,
 
-    education TEXT NOT NULL,
+    education TEXT,
 
     gender INTEGER NOT NULL,
 
@@ -68,15 +67,9 @@ def get_connection() -> Iterator[sqlite3.Connection]:
     操作结束后自动 commit / rollback / close。
     """
 
-    DATA_DIR.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-    conn = sqlite3.connect(
-        DB_PATH,
-        timeout=5.0,
-    )
+    conn = sqlite3.connect(DB_PATH, timeout=5.0)
 
     # 查询结果支持：
     # row["name"]
@@ -84,9 +77,7 @@ def get_connection() -> Iterator[sqlite3.Connection]:
     conn.row_factory = sqlite3.Row
 
     # 每个连接都显式启用外键支持。
-    conn.execute(
-        "PRAGMA foreign_keys = ON"
-    )
+    conn.execute("PRAGMA foreign_keys = ON")
 
     try:
         yield conn
@@ -108,25 +99,15 @@ def init_database() -> None:
     应用启动时执行一次。
     """
 
-    DATA_DIR.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-    conn = sqlite3.connect(
-        DB_PATH,
-        timeout=5.0,
-    )
+    conn = sqlite3.connect(DB_PATH, timeout=5.0)
 
     try:
         # 桌面应用允许查询与写入具有更好的并发体验
-        conn.execute(
-            "PRAGMA journal_mode = WAL"
-        )
+        conn.execute("PRAGMA journal_mode = WAL")
 
-        conn.executescript(
-            SCHEMA_SQL
-        )
+        conn.executescript(SCHEMA_SQL)
 
         conn.commit()
 

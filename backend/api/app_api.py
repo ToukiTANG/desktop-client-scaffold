@@ -2,15 +2,11 @@ from api.person_api import PersonApi
 
 
 class AppApi:
-    """暴露给 Vue 前端调用的 Python API。"""
-
-    def __init__(self):
-        # 人员模块
+    def __init__(self) -> None:
         self.person = PersonApi()
 
+    def _bind_window(self, window) -> None:
+        self.person._bind_window(window)
+
     def ping(self):
-        return {
-            "success": True,
-            "data": "pong",
-            "message": None,
-        }
+        return {"success": True, "data": "pong", "message": None}

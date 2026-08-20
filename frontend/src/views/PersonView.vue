@@ -6,7 +6,11 @@
         <div class="card-header">
           <span class="card-title"> 人员管理 </span>
 
-          <el-button type="primary" @click="handleAdd"> 新增人员 </el-button>
+          <div class="header-actions">
+            <el-button @click="handleImport"> 导入人员 </el-button>
+
+            <el-button type="primary" @click="handleAdd"> 新增人员 </el-button>
+          </div>
         </div>
       </template>
 
@@ -159,6 +163,7 @@
       :person="currentPerson"
       @success="handleDialogSuccess"
     />
+    <PersonImportDialog v-model="importDialogVisible" @success="handleImportSuccess" />
   </div>
 </template>
 
@@ -169,17 +174,11 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 
 import { deletePerson, getPersonList } from '@/api/person'
 
-import {
-  genderOptions,
-  identityOptions,
-  specializeClassifyOptions,
-  productionGroupClassifyOptions,
-  getOptionLabel,
-} from '@/constants/person'
-
 import PersonFormDialog from '@/components/person/PersonFormDialog.vue'
 
 import type { Person, PersonQuery } from '@/types'
+import PersonImportDialog from '@/components/person/PersonImportDialog.vue'
+import { usePersonDictionary } from '@/composables/usePersonDictionary.ts'
 
 const loading = ref(false)
 
@@ -190,6 +189,17 @@ const total = ref(0)
 const dialogVisible = ref(false)
 
 const currentPerson = ref<Person | null>(null)
+
+const importDialogVisible = ref(false)
+
+const {
+  genderOptions,
+  identityOptions,
+  specializeClassifyOptions,
+  productionGroupClassifyOptions,
+  loadDictionary,
+  getOptionLabel,
+} = usePersonDictionary()
 
 const query = reactive<PersonQuery>({
   keyword: '',
@@ -241,6 +251,16 @@ async function loadPersons() {
  * 查询
  */
 function handleSearch() {
+  query.page = 1
+
+  loadPersons()
+}
+
+function handleImport() {
+  importDialogVisible.value = true
+}
+
+function handleImportSuccess() {
   query.page = 1
 
   loadPersons()
@@ -342,8 +362,16 @@ function handleDialogSuccess() {
   loadPersons()
 }
 
-onMounted(() => {
-  loadPersons()
+onMounted(async () => {
+  try {
+    await loadDictionary()
+  } catch (error) {
+    console.error(error)
+
+    ElMessage.error('加载人员业务字典失败')
+  }
+
+  await loadPersons()
 })
 </script>
 
@@ -378,6 +406,12 @@ onMounted(() => {
 .card-title {
   font-size: 16px;
   font-weight: 600;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .search-bar {

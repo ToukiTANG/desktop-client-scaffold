@@ -106,14 +106,17 @@ import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 
 import { createPerson, updatePerson } from '@/api/person'
 
-import {
+import { usePersonDictionary } from '@/composables/usePersonDictionary'
+
+import type { Person, PersonForm } from '@/types'
+
+const {
   genderOptions,
   identityOptions,
   specializeClassifyOptions,
   productionGroupClassifyOptions,
-} from '@/constants/person'
-
-import type { Person, PersonForm } from '@/types'
+  loadDictionary,
+} = usePersonDictionary()
 
 const props = defineProps<{
   modelValue: boolean
@@ -201,14 +204,6 @@ const rules: FormRules<PersonForm> = {
       trigger: 'change',
     },
   ],
-
-  education: [
-    {
-      required: true,
-      message: '请输入学历',
-      trigger: 'blur',
-    },
-  ],
 }
 
 /**
@@ -221,25 +216,26 @@ function resetForm() {
 /**
  * Dialog 打开时初始化数据。
  */
-function handleOpen() {
+async function handleOpen() {
   resetForm()
+
+  try {
+    await loadDictionary()
+  } catch (error) {
+    console.error(error)
+
+    ElMessage.error('加载人员业务字典失败')
+  }
 
   if (props.person) {
     Object.assign(form, {
       name: props.person.name,
-
       department: props.person.department,
-
       jobTitle: props.person.jobTitle,
-
       identity: props.person.identity,
-
       specializeClassify: props.person.specializeClassify,
-
-      education: props.person.education,
-
+      education: props.person.education ?? '',
       gender: props.person.gender,
-
       productionGroupClassify: props.person.productionGroupClassify,
     })
   }

@@ -1,4 +1,13 @@
-import type { ApiResponse, PageResult, Person, PersonForm, PersonQuery } from './index'
+import type {
+  ApiResponse,
+  PageResult,
+  Person,
+  PersonForm,
+  PersonQuery,
+  PersonImportResult,
+  PersonImportPreviewResult,
+  PersonDictionary,
+} from './index'
 
 export {}
 
@@ -7,6 +16,7 @@ declare global {
    * Python PersonApi 暴露给前端的方法
    */
   interface PersonApi {
+    get_dictionary(): Promise<ApiResponse<PersonDictionary>>
     /**
      * 查询人员列表
      */
@@ -30,6 +40,10 @@ declare global {
      * 删除人员
      */
     delete(personId: number): Promise<ApiResponse<null>>
+
+    select_import_file(): Promise<ApiResponse<PersonImportPreviewResult | null>>
+
+    confirm_import(): Promise<ApiResponse<PersonImportResult>>
   }
 
   /**

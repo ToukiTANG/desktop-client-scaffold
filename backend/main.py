@@ -10,15 +10,9 @@ DEV_SERVER_URL = "http://127.0.0.1:5173"
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Desktop Client",
-    )
+    parser = argparse.ArgumentParser(description="Desktop Client")
 
-    parser.add_argument(
-        "--dev",
-        action="store_true",
-        help="Run application in development mode",
-    )
+    parser.add_argument("--dev", action="store_true", help="Run application in development mode")
 
     return parser.parse_args()
 
@@ -47,10 +41,7 @@ def get_app_url(dev: bool) -> str:
 
     if not index_file.exists():
         raise FileNotFoundError(
-            "Frontend build not found: "
-            f"{index_file}\n"
-            "Please run `npm run build` "
-            "inside frontend first."
+            f"Frontend build not found: {index_file}\nPlease run `npm run build` inside frontend first."
         )
 
     return str(index_file)
@@ -61,23 +52,15 @@ def main() -> None:
     init_database()
     api = AppApi()
 
-    app_url = get_app_url(
-        dev=args.dev,
+    app_url = get_app_url(dev=args.dev)
+
+    window = webview.create_window(
+        title="Desktop Client", url=app_url, js_api=api, width=1600, height=900, min_size=(900, 600)
     )
 
-    webview.create_window(
-        title="Desktop Client",
-        url=app_url,
-        js_api=api,
-        width=1400,
-        height=900,
-        min_size=(900, 600),
-    )
+    api._bind_window(window)
 
-    webview.start(
-        debug=args.dev,
-        http_server=not args.dev,
-    )
+    webview.start(debug=args.dev, http_server=not args.dev)
 
 
 if __name__ == "__main__":

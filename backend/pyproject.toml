@@ -5,5 +5,23 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "openpyxl>=3.1.5",
     "pywebview>=6.2.1",
+]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = true
+line-ending = "auto"
+
+[tool.ruff.lint.isort]
+split-on-trailing-comma = false
+
+[dependency-groups]
+dev = [
+    "ruff>=0.16.3",
 ]
