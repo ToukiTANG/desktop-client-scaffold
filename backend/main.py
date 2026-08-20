@@ -4,7 +4,7 @@ from pathlib import Path
 import webview
 
 from api.app_api import AppApi
-
+from core.database import init_database
 
 DEV_SERVER_URL = "http://127.0.0.1:5173"
 
@@ -58,7 +58,7 @@ def get_app_url(dev: bool) -> str:
 
 def main() -> None:
     args = parse_args()
-
+    init_database()
     api = AppApi()
 
     app_url = get_app_url(
@@ -69,8 +69,8 @@ def main() -> None:
         title="Desktop Client",
         url=app_url,
         js_api=api,
-        width=1280,
-        height=800,
+        width=1400,
+        height=900,
         min_size=(900, 600),
     )
 

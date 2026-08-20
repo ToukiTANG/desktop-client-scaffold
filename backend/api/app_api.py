@@ -1,29 +1,16 @@
-import platform
-import sys
+from api.person_api import PersonApi
 
 
 class AppApi:
     """暴露给 Vue 前端调用的 Python API。"""
 
-    def ping(self) -> dict:
-        return {
-            "code": 0,
-            "message": "pong",
-        }
+    def __init__(self):
+        # 人员模块
+        self.person = PersonApi()
 
-    def hello(self, name: str) -> dict:
+    def ping(self):
         return {
-            "code": 0,
-            "message": f"Hello, {name}",
-        }
-
-    def get_system_info(self) -> dict:
-        return {
-            "code": 0,
-            "data": {
-                "system": platform.system(),
-                "release": platform.release(),
-                "machine": platform.machine(),
-                "python_version": sys.version,
-            },
+            "success": True,
+            "data": "pong",
+            "message": None,
         }

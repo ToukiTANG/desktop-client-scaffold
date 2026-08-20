@@ -16,9 +16,9 @@
           <span>首页</span>
         </el-menu-item>
 
-        <el-menu-item index="/tool">
-          <el-icon> <Tools /> </el-icon>
-          <span>工具</span>
+        <el-menu-item index="/person">
+          <el-icon> <User /> </el-icon>
+          <span>人员列表</span>
         </el-menu-item>
       </el-menu>
 
@@ -42,7 +42,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { HomeFilled, Tools, Setting } from '@element-plus/icons-vue'
+import { HomeFilled, User, Setting } from '@element-plus/icons-vue'
 
 const route = useRoute()
 
@@ -132,7 +132,7 @@ const activeMenu = computed(() => route.path)
 
   overflow: auto;
 
-  padding: 24px;
+  padding: 12px;
 
   box-sizing: border-box;
 }

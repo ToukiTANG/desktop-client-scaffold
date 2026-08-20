@@ -16,7 +16,7 @@ function waitForPyWebView(): Promise<void> {
   })
 }
 
-async function getApi(): Promise<AppApi> {
+export async function getApi(): Promise<AppApi> {
   await waitForPyWebView()
 
   const api = window.pywebview?.api
@@ -28,20 +28,3 @@ async function getApi(): Promise<AppApi> {
   return api
 }
 
-export async function ping() {
-  const api = await getApi()
-
-  return api.ping()
-}
-
-export async function hello(name: string) {
-  const api = await getApi()
-
-  return api.hello(name)
-}
-
-export async function getSystemInfo() {
-  const api = await getApi()
-
-  return api.get_system_info()
-}

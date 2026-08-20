@@ -18,9 +18,9 @@ const router = createRouter({
         },
 
         {
-          path: 'tool',
-          name: 'tool',
-          component: () => import('@/views/ToolView.vue'),
+          path: 'person',
+          name: 'person',
+          component: () => import('@/views/PersonView.vue'),
         },
 
         {
