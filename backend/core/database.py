@@ -38,5 +38,6 @@ def init_database() -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
 
     config = Config(str(ALEMBIC_INI_PATH))
+    config.attributes["configure_logger"] = False
 
     command.upgrade(config, "head")

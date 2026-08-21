@@ -30,29 +30,13 @@ def upgrade() -> None:
     op.create_index("idx_person_name", "person", ["name"])
     op.create_index("idx_person_department", "person", ["department"])
     op.create_index("idx_person_identity", "person", ["identity"])
-    op.create_index(
-        "idx_person_specialize_classify",
-        "person",
-        ["specialize_classify"],
-    )
+    op.create_index("idx_person_specialize_classify", "person", ["specialize_classify"])
 
 
 def downgrade() -> None:
-    op.drop_index(
-        "idx_person_specialize_classify",
-        table_name="person",
-    )
-    op.drop_index(
-        "idx_person_identity",
-        table_name="person",
-    )
-    op.drop_index(
-        "idx_person_department",
-        table_name="person",
-    )
-    op.drop_index(
-        "idx_person_name",
-        table_name="person",
-    )
+    op.drop_index("idx_person_specialize_classify", table_name="person")
+    op.drop_index("idx_person_identity", table_name="person")
+    op.drop_index("idx_person_department", table_name="person")
+    op.drop_index("idx_person_name", table_name="person")
 
     op.drop_table("person")

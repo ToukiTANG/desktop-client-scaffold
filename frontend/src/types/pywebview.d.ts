@@ -7,6 +7,7 @@ import type {
   PersonImportResult,
   PersonImportPreviewResult,
   PersonDictionary,
+  AppInfo,
 } from './index'
 
 export {}
@@ -54,6 +55,10 @@ declare global {
      * 通信测试
      */
     ping(): Promise<ApiResponse<string>>
+
+    get_app_info(): Promise<ApiResponse<AppInfo>>
+
+    open_directory(path: string): Promise<ApiResponse<boolean>>
 
     /**
      * 人员模块

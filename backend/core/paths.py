@@ -1,3 +1,4 @@
+import os
 import sys
 from pathlib import Path
 
@@ -23,6 +24,23 @@ def get_frontend_dist() -> Path:
 
 def get_data_dir() -> Path:
     if is_frozen():
-        return Path(sys.executable).resolve().parent / "data"
+        local_app_data = os.environ.get("LOCALAPPDATA")
+
+        if not local_app_data:
+            raise RuntimeError("LOCALAPPDATA environment variable is unavailable")
+
+        return Path(local_app_data) / "DesktopClient" / "data"
 
     return get_backend_root() / "data"
+
+
+def get_log_dir() -> Path:
+    if is_frozen():
+        local_app_data = os.environ.get("LOCALAPPDATA")
+
+        if not local_app_data:
+            raise RuntimeError("LOCALAPPDATA environment variable is unavailable")
+
+        return Path(local_app_data) / "DesktopClient" / "logs"
+
+    return get_backend_root() / "logs"

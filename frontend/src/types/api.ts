@@ -12,3 +12,9 @@ export interface PageResult<T> {
   page: number
   pageSize: number
 }
+
+export interface AppInfo {
+  version: string
+  dataDir: string
+  logDir: string
+}
