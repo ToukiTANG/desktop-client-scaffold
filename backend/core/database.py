@@ -1,18 +1,14 @@
 from contextlib import contextmanager
-from pathlib import Path
 import sqlite3
 
 from alembic import command
 from alembic.config import Config
 
+from core.paths import get_backend_root, get_data_dir
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-
-DATA_DIR = BASE_DIR / "data"
-
+DATA_DIR = get_data_dir()
 DB_PATH = DATA_DIR / "desktop.db"
-
-ALEMBIC_INI_PATH = BASE_DIR / "alembic.ini"
+ALEMBIC_INI_PATH = get_backend_root() / "alembic.ini"
 
 
 def create_connection() -> sqlite3.Connection:

@@ -1,10 +1,10 @@
 import argparse
-from pathlib import Path
 
 import webview
 
 from api.app_api import AppApi
 from core.database import init_database
+from core.paths import get_frontend_dist
 
 DEV_SERVER_URL = "http://127.0.0.1:5173"
 
@@ -15,22 +15,6 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--dev", action="store_true", help="Run application in development mode")
 
     return parser.parse_args()
-
-
-def get_project_root() -> Path:
-    """
-    backend 和 frontend 的共同父目录。
-    """
-
-    backend_dir = Path(__file__).resolve().parent
-
-    return backend_dir.parent
-
-
-def get_frontend_dist() -> Path:
-    project_root = get_project_root()
-
-    return project_root / "frontend" / "dist"
 
 
 def get_app_url(dev: bool) -> str:
