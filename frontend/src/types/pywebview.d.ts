@@ -8,6 +8,11 @@ import type {
   PersonImportPreviewResult,
   PersonDictionary,
   AppInfo,
+  CheckProblem,
+  CheckProblemQuery,
+  ProblemDictionary,
+  ProblemImportPreviewResult,
+  ProblemImportResult,
 } from './index'
 
 export {}
@@ -46,6 +51,15 @@ declare global {
 
     confirm_import(): Promise<ApiResponse<PersonImportResult>>
   }
+  interface ProblemApi {
+    list(params: CheckProblemQuery): Promise<ApiResponse<PageResult<CheckProblem>>>
+
+    get_dictionary(): Promise<ApiResponse<ProblemDictionary>>
+
+    select_import_file(): Promise<ApiResponse<ProblemImportPreviewResult | null>>
+
+    confirm_import(): Promise<ApiResponse<ProblemImportResult>>
+  }
 
   /**
    * Python AppApi
@@ -64,6 +78,7 @@ declare global {
      * 人员模块
      */
     person: PersonApi
+    problem: ProblemApi
   }
 
   /**

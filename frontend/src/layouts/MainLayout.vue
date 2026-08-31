@@ -20,6 +20,11 @@
           <el-icon> <User /> </el-icon>
           <span>人员列表</span>
         </el-menu-item>
+
+        <el-menu-item index="/problem">
+          <el-icon> <Warning /> </el-icon>
+          <span>问题列表</span>
+        </el-menu-item>
       </el-menu>
 
       <div class="sidebar-footer">
@@ -42,7 +47,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { HomeFilled, User, Setting } from '@element-plus/icons-vue'
+import { HomeFilled, User, Setting, Warning } from '@element-plus/icons-vue'
 
 const route = useRoute()
 

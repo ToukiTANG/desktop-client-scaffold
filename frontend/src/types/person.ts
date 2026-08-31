@@ -1,3 +1,4 @@
+import type { DictionaryOption } from './api'
 export interface Person {
   id: number
   name: string
@@ -39,11 +40,6 @@ export interface PersonQuery {
 
   page: number
   pageSize: number
-}
-
-export interface DictionaryOption {
-  value: number
-  label: string
 }
 
 export interface PersonDictionary {

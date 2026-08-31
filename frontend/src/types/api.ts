@@ -18,3 +18,8 @@ export interface AppInfo {
   dataDir: string
   logDir: string
 }
+
+export interface DictionaryOption {
+  value: number
+  label: string
+}
