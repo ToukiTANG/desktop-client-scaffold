@@ -133,10 +133,10 @@
             </template>
           </el-table-column>
 
-          <el-table-column label="操作" width="150" fixed="right">
+          <el-table-column label="操作" width="200" fixed="right">
             <template #default="{ row }">
               <el-button type="primary" link @click="handleEdit(row)"> 编辑 </el-button>
-
+              <el-button type="warning" link @click="handlePortrait(row)"> 人物画像 </el-button>
               <el-button type="danger" link @click="handleDelete(row)"> 删除 </el-button>
             </template>
           </el-table-column>
@@ -179,6 +179,7 @@ import PersonFormDialog from '@/components/person/PersonFormDialog.vue'
 import type { Person, PersonQuery } from '@/types'
 import PersonImportDialog from '@/components/person/PersonImportDialog.vue'
 import { usePersonDictionary } from '@/composables/usePersonDictionary.ts'
+import router from '@/router'
 
 const loading = ref(false)
 
@@ -312,6 +313,18 @@ function handleEdit(person: Person) {
   currentPerson.value = person
 
   dialogVisible.value = true
+}
+
+/**
+ * 人物画像
+ */
+function handlePortrait(person: Person) {
+  router.push({
+    path: '/profile',
+    query: {
+      topicId: person.id.toString(),
+    },
+  })
 }
 
 /**

@@ -25,6 +25,11 @@
           <el-icon> <Warning /> </el-icon>
           <span>问题列表</span>
         </el-menu-item>
+
+        <el-menu-item index="/profile">
+          <el-icon><Postcard /></el-icon>
+          <span>人物画像</span>
+        </el-menu-item>
       </el-menu>
 
       <div class="sidebar-footer">
@@ -47,7 +52,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { HomeFilled, User, Setting, Warning } from '@element-plus/icons-vue'
+import { HomeFilled, User, Setting, Warning, Postcard } from '@element-plus/icons-vue'
 
 const route = useRoute()
 
