@@ -56,7 +56,7 @@ def main() -> None:
         logger.info("Application URL: %s", app_url)
 
         window = webview.create_window(
-            title="Desktop Client", url=app_url, js_api=api, width=1600, height=900, min_size=(900, 600)
+            title="Desktop Client", url=app_url, js_api=api, width=1600, height=900, min_size=(900, 600), text_select=True,
         )
 
         api._bind_window(window)
