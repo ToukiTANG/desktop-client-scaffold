@@ -37,7 +37,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { HomeFilled, User, Setting, Warning, Postcard } from '@element-plus/icons-vue'
+import { HomeFilled, Setting } from '@element-plus/icons-vue'
 
 const route = useRoute()
 
