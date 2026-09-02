@@ -15,21 +15,6 @@
           <el-icon> <HomeFilled /> </el-icon>
           <span>首页</span>
         </el-menu-item>
-
-        <el-menu-item index="/person">
-          <el-icon> <User /> </el-icon>
-          <span>人员列表</span>
-        </el-menu-item>
-
-        <el-menu-item index="/problem">
-          <el-icon> <Warning /> </el-icon>
-          <span>问题列表</span>
-        </el-menu-item>
-
-        <el-menu-item index="/profile">
-          <el-icon><Postcard /></el-icon>
-          <span>人物画像</span>
-        </el-menu-item>
       </el-menu>
 
       <div class="sidebar-footer">
