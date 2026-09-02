@@ -167,7 +167,7 @@ class PersonService:
 
         headers = [self._excel_text(value) for value in header_row]
 
-        required_headers = ["姓名", "部门", "职名", "身份类型", "专业分类", "学历", "性别", "生产组分类"]
+        required_headers = ["姓名11", "部门", "职名", "身份", "专业分类", "文化（报表用）", "性别", "生产组分类（1.普速铁路房建设备巡检维修人员；2.高速铁路房建设备巡检维修人员；3.行车公寓人员）"]
 
         missing_headers = [header for header in required_headers if header not in headers]
 
@@ -637,15 +637,15 @@ class PersonService:
             return row[index]
 
         person = {
-            "name": self._excel_text(cell("姓名")),
+            "name": self._excel_text(cell("姓名11")),
             "department": self._excel_text(cell("部门")),
             "jobTitle": self._excel_text(cell("职名")),
-            "identity": self._parse_excel_option(cell("身份类型"), "身份类型", IDENTITY_MAP),
+            "identity": self._parse_excel_option(cell("身份"), "身份", IDENTITY_MAP),
             "specializeClassify": self._parse_excel_option(cell("专业分类"), "专业分类", SPECIALIZE_CLASSIFY_MAP),
-            "education": self._excel_text(cell("学历")),
+            "education": self._excel_text(cell("文化（报表用）")),
             "gender": self._parse_excel_option(cell("性别"), "性别", GENDER_MAP),
             "productionGroupClassify": self._parse_excel_option(
-                cell("生产组分类"), "生产组分类", PRODUCTION_GROUP_CLASSIFY_MAP, required=False
+                cell("生产组分类（1.普速铁路房建设备巡检维修人员；2.高速铁路房建设备巡检维修人员；3.行车公寓人员）"), "生产组分类", PRODUCTION_GROUP_CLASSIFY_MAP, required=False
             ),
         }
 

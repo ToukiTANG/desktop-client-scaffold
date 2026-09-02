@@ -29,7 +29,8 @@
       <el-alert class="import-alert" title="Excel 字段要求" type="info" :closable="false" show-icon>
         <template #default>
           <div class="field-description">
-            Excel 第一行必须包含： 姓名、部门、职名、身份类型、专业分类、学历、性别、生产组分类。
+            Excel 第一行必须包含：
+            姓名11、部门、职名、身份、专业分类、文化（报表用）、性别、生产组分类（1.普速铁路房建设备巡检维修人员；2.高速铁路房建设备巡检维修人员；3.行车公寓人员）。
           </div>
         </template>
       </el-alert>
