@@ -23,3 +23,13 @@ export interface DictionaryOption {
   value: number
   label: string
 }
+
+export interface AppConfig {
+  workshop: string
+  apartment: string
+}
+
+export interface AppConfigStatus {
+  configured: boolean
+  config: AppConfig | null
+}

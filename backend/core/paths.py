@@ -44,3 +44,7 @@ def get_log_dir() -> Path:
         return Path(local_app_data) / "DesktopClient" / "logs"
 
     return get_backend_root() / "logs"
+
+
+def get_config_file() -> Path:
+    return get_data_dir() / "config.json"

@@ -1,14 +1,10 @@
-import type { ApiResponse, AppInfo } from './index'
+import type { ApiResponse, AppConfig, AppConfigStatus, AppInfo } from './index'
 
 export {}
 
 declare global {
   /**
-   * Python PersonApi 暴露给前端的方法
-   */
-
-  /**
-   * Python AppApi
+   * Python AppApi 暴露给前端的方法
    */
   interface AppApi {
     /**
@@ -16,9 +12,25 @@ declare global {
      */
     ping(): Promise<ApiResponse<string>>
 
+    /**
+     * 获取应用信息
+     */
     get_app_info(): Promise<ApiResponse<AppInfo>>
 
+    /**
+     * 打开本地目录
+     */
     open_directory(path: string): Promise<ApiResponse<boolean>>
+
+    /**
+     * 获取应用初始化配置
+     */
+    get_app_config(): Promise<ApiResponse<AppConfigStatus>>
+
+    /**
+     * 保存应用初始化配置
+     */
+    save_app_config(workshop: string, apartment: string): Promise<ApiResponse<AppConfig>>
   }
 
   /**
