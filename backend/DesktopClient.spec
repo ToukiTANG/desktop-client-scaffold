@@ -1,4 +1,4 @@
-import tomllib
+import tomli
 from pathlib import Path
 
 from PyInstaller.utils.hooks import collect_all
@@ -24,7 +24,7 @@ icon_file = backend_dir / "build_resources" / "app.ico"
 # ============================================================
 
 with pyproject_file.open("rb") as f:
-    pyproject = tomllib.load(f)
+    pyproject = tomli.load(f)
 
 app_version = pyproject["project"]["version"]
 
@@ -166,7 +166,7 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False,
     console=False,
     version=str(version_file),
     icon=str(icon_file),
@@ -182,7 +182,7 @@ coll = COLLECT(
     a.binaries,
     a.datas,
     strip=False,
-    upx=True,
+    upx=False,
     upx_exclude=[],
     name="DesktopClient",
 )

@@ -8,6 +8,7 @@ from api.app_api import AppApi
 from core.database import init_database
 from core.logging_config import setup_logging
 from core.paths import get_frontend_dist
+from core.webview2 import validate_webview2_runtime
 
 DEV_SERVER_URL = "http://127.0.0.1:5173"
 
@@ -48,6 +49,16 @@ def main() -> None:
     logger.info("Development mode: %s", args.dev)
 
     try:
+        validate_webview2_runtime()
+    except RuntimeError as exc:
+        logger.exception("WebView2 runtime validation failed")
+
+        if not args.dev:
+            show_startup_error(str(exc))
+
+        raise
+
+    try:
         init_database()
 
         api = AppApi()
@@ -69,9 +80,10 @@ def main() -> None:
 
         logger.info("Starting PyWebView")
 
-        webview.start(debug=args.dev, http_server=not args.dev)
+        webview.start(gui="edgechromium", debug=args.dev, http_server=not args.dev)
 
         logger.info("Desktop Client stopped")
+
     except Exception:
         logger.exception("Desktop Client startup failed")
 

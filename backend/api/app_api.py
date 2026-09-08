@@ -18,19 +18,12 @@ class AppApi:
 
     def get_app_info(self):
         return success(
-            data={
-                "version": get_app_version(),
-                "dataDir": str(get_data_dir()),
-                "logDir": str(get_log_dir()),
-            }
+            data={"version": get_app_version(), "dataDir": str(get_data_dir()), "logDir": str(get_log_dir())}
         )
 
     def open_directory(self, path: str):
         if not os.path.isdir(path):
-            return success(
-                data=False,
-                message=f"目录不存在: {path}",
-            )
+            return success(data=False, message=f"目录不存在: {path}")
 
         os.startfile(path)
 
@@ -40,26 +33,13 @@ class AppApi:
         config = load_config()
         configured = is_configured(config)
 
-        return success(
-            data={
-                "configured": configured,
-                "config": config if configured else None,
-            }
-        )
+        return success(data={"configured": configured, "config": config if configured else None})
 
     def save_app_config(self, workshop: str, apartment: str):
         try:
-            save_config(
-                workshop=workshop,
-                apartment=apartment,
-            )
+            save_config(workshop=workshop, apartment=apartment)
 
-            return success(
-                data={
-                    "workshop": workshop.strip(),
-                    "apartment": apartment.strip(),
-                }
-            )
+            return success(data={"workshop": workshop.strip(), "apartment": apartment.strip()})
 
         except ValueError as exc:
             return failure(message=str(exc))
