@@ -24,12 +24,4 @@ export interface DictionaryOption {
   label: string
 }
 
-export interface AppConfig {
-  workshop: string
-  apartment: string
-}
-
-export interface AppConfigStatus {
-  configured: boolean
-  config: AppConfig | null
-}
+export type AppConfig = Record<string, unknown>

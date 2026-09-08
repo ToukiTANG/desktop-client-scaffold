@@ -1,4 +1,4 @@
-import type { ApiResponse, AppConfig, AppConfigStatus, AppInfo } from './index'
+import type { ApiResponse, AppConfig, AppInfo, } from './index'
 
 export {}
 
@@ -25,12 +25,12 @@ declare global {
     /**
      * 获取应用初始化配置
      */
-    get_app_config(): Promise<ApiResponse<AppConfigStatus>>
+    get_app_config(): Promise<ApiResponse<AppConfig>>
 
     /**
      * 保存应用初始化配置
      */
-    save_app_config(workshop: string, apartment: string): Promise<ApiResponse<AppConfig>>
+    save_app_config(config: AppConfig,): Promise<ApiResponse<AppConfig>>
 
     /**
      * 统一业务 API 调用入口
