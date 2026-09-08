@@ -1,3 +1,5 @@
+import type { ApiResponse } from '@/types'
+
 function waitForPyWebView(): Promise<void> {
   if (window.pywebview?.api) {
     return Promise.resolve()
@@ -28,3 +30,11 @@ export async function getApi(): Promise<AppApi> {
   return api
 }
 
+/**
+ * 调用 Python 业务 API。
+ */
+export async function callApi<T>(module: string, method: string, ...args: unknown[]): Promise<ApiResponse<T>> {
+  const api = await getApi()
+
+  return await api.invoke<T>(module, method, args)
+}

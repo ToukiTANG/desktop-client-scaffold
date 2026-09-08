@@ -31,6 +31,11 @@ declare global {
      * 保存应用初始化配置
      */
     save_app_config(workshop: string, apartment: string): Promise<ApiResponse<AppConfig>>
+
+    /**
+     * 统一业务 API 调用入口
+     */
+    invoke<T = unknown>(module: string, method: string, args?: unknown[]): Promise<ApiResponse<T>>
   }
 
   /**

@@ -1,29 +1,107 @@
-import os
+from __future__ import annotations
 
+import logging
+import os
+from typing import Any
+
+from api.material_price_api import MaterialPriceApi
+from core.app_config import is_configured, load_config, save_config
 from core.paths import get_data_dir, get_log_dir
 from core.response import failure, success
 from core.version import get_app_version
-from core.app_config import is_configured, load_config, save_config
+
+
+logger = logging.getLogger(__name__)
 
 
 class AppApi:
     def __init__(self):
-        pass
+        self._window = None
+
+        self._apis = {
+            "material_price": MaterialPriceApi(),
+        }
 
     def _bind_window(self, window):
-        pass
+        self._window = window
+
+        for api in self._apis.values():
+            api._bind_window(window)
+
+    def invoke(
+        self,
+        module: str,
+        method: str,
+        args: list[Any] | None = None,
+    ):
+        """
+        统一调用业务 API。
+
+        JS:
+            invoke(
+                "material_price",
+                "get_material_prices",
+                []
+            )
+        """
+
+        api = self._apis.get(module)
+
+        if api is None:
+            return failure(
+                message=f"未知 API 模块: {module}"
+            )
+
+        if method.startswith("_"):
+            return failure(
+                message=f"不允许调用私有 API 方法: {method}"
+            )
+
+        func = getattr(api, method, None)
+
+        if func is None or not callable(func):
+            return failure(
+                message=f"未知 API 方法: {module}.{method}"
+            )
+
+        try:
+            data = func(*(args or []))
+
+            return success(data=data)
+
+        except Exception as exc:
+            logger.exception(
+                "API call failed: %s.%s",
+                module,
+                method,
+            )
+
+            return failure(
+                message=str(exc)
+            )
+
+    # ========================================================
+    # 系统级 API
+    # ========================================================
 
     def ping(self):
         return success(data="pong")
 
     def get_app_info(self):
         return success(
-            data={"version": get_app_version(), "dataDir": str(get_data_dir()), "logDir": str(get_log_dir())}
+            data={
+                "version": get_app_version(),
+                "dataDir": str(get_data_dir()),
+                "logDir": str(get_log_dir()),
+            }
         )
 
     def open_directory(self, path: str):
         if not os.path.isdir(path):
-            return success(data=False, message=f"目录不存在: {path}")
+            return success(
+                data=False,
+                message=f"目录不存在: {path}",
+            )
 
         os.startfile(path)
 
@@ -33,13 +111,32 @@ class AppApi:
         config = load_config()
         configured = is_configured(config)
 
-        return success(data={"configured": configured, "config": config if configured else None})
+        return success(
+            data={
+                "configured": configured,
+                "config": config if configured else None,
+            }
+        )
 
-    def save_app_config(self, workshop: str, apartment: str):
+    def save_app_config(
+        self,
+        workshop: str,
+        apartment: str,
+    ):
         try:
-            save_config(workshop=workshop, apartment=apartment)
+            save_config(
+                workshop=workshop,
+                apartment=apartment,
+            )
 
-            return success(data={"workshop": workshop.strip(), "apartment": apartment.strip()})
+            return success(
+                data={
+                    "workshop": workshop.strip(),
+                    "apartment": apartment.strip(),
+                }
+            )
 
         except ValueError as exc:
-            return failure(message=str(exc))
+            return failure(
+                message=str(exc)
+            )

@@ -15,6 +15,11 @@
           <el-icon> <HomeFilled /> </el-icon>
           <span>首页</span>
         </el-menu-item>
+
+        <el-menu-item index="/material-price">
+          <el-icon><Coin /></el-icon>
+          <span>材料价格</span>
+        </el-menu-item>
       </el-menu>
 
       <div class="sidebar-footer">
@@ -35,13 +40,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { HomeFilled, Setting } from '@element-plus/icons-vue'
+import { Coin, HomeFilled, Setting } from '@element-plus/icons-vue'
+import { materialPriceStore } from '@/stores/materialPrice.ts'
 
 const route = useRoute()
 
 const activeMenu = computed(() => route.path)
+
+onMounted(() => {
+  void materialPriceStore.load()
+})
 </script>
 
 <style scoped>
