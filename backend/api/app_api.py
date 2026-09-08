@@ -4,7 +4,6 @@ import logging
 import os
 from typing import Any
 
-from api.material_price_api import MaterialPriceApi
 from core.app_config import is_configured, load_config, save_config
 from core.paths import get_data_dir, get_log_dir
 from core.response import failure, success
@@ -19,7 +18,6 @@ class AppApi:
         self._window = None
 
         self._apis = {
-            "material_price": MaterialPriceApi(),
         }
 
     def _bind_window(self, window):
@@ -36,13 +34,6 @@ class AppApi:
     ):
         """
         统一调用业务 API。
-
-        JS:
-            invoke(
-                "material_price",
-                "get_material_prices",
-                []
-            )
         """
 
         api = self._apis.get(module)

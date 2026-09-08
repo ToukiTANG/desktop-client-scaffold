@@ -25,12 +25,6 @@ const router = createRouter({
         },
 
         {
-          path: '/material-price',
-          name: 'material-price',
-          component: () => import('@/views/MaterialPrice/MaterialPriceView.vue'),
-        },
-
-        {
           path: 'settings',
           name: 'settings',
           component: () => import('@/views/SettingsView.vue'),
