@@ -3,7 +3,6 @@ from pathlib import Path
 
 import webview
 
-
 EXPECTED_PYWEBVIEW_VERSION = "4.2.2"
 
 ORIGINAL_CODE = """                self.scale_factor = windll.shcore.GetScaleFactorForDevice(0) / 100"""

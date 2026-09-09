@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import sys
 import winreg
-from typing import Optional
-
 
 WEBVIEW2_CLIENT_ID = "{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}"
 
@@ -20,7 +18,7 @@ def is_windows_7() -> bool:
     return version.major == 6 and version.minor == 1
 
 
-def get_webview2_version() -> Optional[str]:
+def get_webview2_version() -> str | None:
     """
     获取系统已安装的 WebView2 Runtime 版本。
 

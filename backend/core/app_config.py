@@ -39,9 +39,7 @@ def load_config() -> dict[str, Any]:
         ) from exc
 
     if not isinstance(config, dict):
-        raise ValueError(
-            f"配置文件根节点必须是 JSON object: {config_file}"
-        )
+        raise TypeError(f"配置文件根节点必须是 JSON object: {config_file}")
 
     return config
 

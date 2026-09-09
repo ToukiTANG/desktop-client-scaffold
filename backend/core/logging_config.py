@@ -5,7 +5,6 @@ from logging.handlers import RotatingFileHandler
 
 from core.paths import get_log_dir
 
-
 LOG_FORMAT = "%(asctime)s | %(levelname)s | %(name)s | %(threadName)s | %(message)s"
 DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 

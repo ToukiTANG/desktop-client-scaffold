@@ -1,9 +1,9 @@
-from contextlib import contextmanager
 import sqlite3
+from contextlib import contextmanager
 
-from alembic import command
 from alembic.config import Config
 
+from alembic import command
 from core.paths import get_backend_root, get_data_dir
 
 DATA_DIR = get_data_dir()
