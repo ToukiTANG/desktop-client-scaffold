@@ -37,12 +37,7 @@ def get_app_url(dev: bool) -> str:
 
 
 def show_startup_error(message: str) -> None:
-    ctypes.windll.user32.MessageBoxW(
-        0,
-        message,
-        f"{get_app_name()} 启动失败",
-        0x10,
-    )
+    ctypes.windll.user32.MessageBoxW(0, message, f"{get_app_name()} 启动失败", 0x10)
 
 
 def main() -> None:
@@ -73,13 +68,7 @@ def main() -> None:
         logger.info("Application URL: %s", app_url)
 
         window = webview.create_window(
-            title=get_app_name(),
-            url=app_url,
-            js_api=api,
-            width=1600,
-            height=900,
-            min_size=(900, 600),
-            text_select=True,
+            title=get_app_name(), url=app_url, js_api=api, width=1600, height=900, min_size=(900, 600), text_select=True
         )
 
         api._bind_window(window)
@@ -94,11 +83,7 @@ def main() -> None:
         logger.exception("%s startup failed", get_app_name())
 
         if not args.dev:
-            show_startup_error(
-                "程序启动失败。\n\n"
-                "详细错误信息已记录到日志文件：\n"
-                f"{get_log_dir() / 'app.log'}"
-            )
+            show_startup_error(f"程序启动失败。\n\n详细错误信息已记录到日志文件：\n{get_log_dir() / 'app.log'}")
 
         raise
 

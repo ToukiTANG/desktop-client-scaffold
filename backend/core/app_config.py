@@ -30,13 +30,9 @@ def load_config() -> dict[str, Any]:
         with config_file.open("r", encoding="utf-8") as f:
             config = json.load(f)
     except json.JSONDecodeError as exc:
-        raise ValueError(
-            f"配置文件格式错误: {config_file}"
-        ) from exc
+        raise ValueError(f"配置文件格式错误: {config_file}") from exc
     except OSError as exc:
-        raise RuntimeError(
-            f"配置文件读取失败: {config_file}"
-        ) from exc
+        raise RuntimeError(f"配置文件读取失败: {config_file}") from exc
 
     if not isinstance(config, dict):
         raise TypeError(f"配置文件根节点必须是 JSON object: {config_file}")
@@ -55,28 +51,15 @@ def save_config(config: dict[str, Any]) -> None:
         raise TypeError("config must be a dict")
 
     config_file = get_config_file()
-    config_file.parent.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
+    config_file.parent.mkdir(parents=True, exist_ok=True)
 
-    temp_file = config_file.with_name(
-        f"{config_file.name}.tmp"
-    )
+    temp_file = config_file.with_name(f"{config_file.name}.tmp")
 
     try:
         with temp_file.open("w", encoding="utf-8") as f:
-            json.dump(
-                config,
-                f,
-                ensure_ascii=False,
-                indent=2,
-            )
+            json.dump(config, f, ensure_ascii=False, indent=2)
 
-        os.replace(
-            str(temp_file),
-            str(config_file),
-        )
+        os.replace(str(temp_file), str(config_file))
 
     except (OSError, TypeError, ValueError):
         if temp_file.exists():

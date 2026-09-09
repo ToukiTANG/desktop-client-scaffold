@@ -26,12 +26,7 @@ class AppApi:
         for api in self._apis.values():
             api._bind_window(window)
 
-    def invoke(
-        self,
-        module: str,
-        method: str,
-        args: list[Any] | None = None,
-    ):
+    def invoke(self, module: str, method: str, args: list[Any] | None = None):
         """
         统一调用业务 API。
         """
@@ -39,21 +34,15 @@ class AppApi:
         api = self._apis.get(module)
 
         if api is None:
-            return failure(
-                message=f"未知 API 模块: {module}"
-            )
+            return failure(message=f"未知 API 模块: {module}")
 
         if method.startswith("_"):
-            return failure(
-                message=f"不允许调用私有 API 方法: {method}"
-            )
+            return failure(message=f"不允许调用私有 API 方法: {method}")
 
         func = getattr(api, method, None)
 
         if func is None or not callable(func):
-            return failure(
-                message=f"未知 API 方法: {module}.{method}"
-            )
+            return failure(message=f"未知 API 方法: {module}.{method}")
 
         try:
             data = func(*(args or []))
@@ -61,15 +50,9 @@ class AppApi:
             return success(data=data)
 
         except Exception as exc:
-            logger.exception(
-                "API call failed: %s.%s",
-                module,
-                method,
-            )
+            logger.exception("API call failed: %s.%s", module, method)
 
-            return failure(
-                message=str(exc)
-            )
+            return failure(message=str(exc))
 
     # ========================================================
     # 系统级 API
@@ -90,10 +73,7 @@ class AppApi:
 
     def open_directory(self, path: str):
         if not os.path.isdir(path):
-            return success(
-                data=False,
-                message=f"目录不存在: {path}",
-            )
+            return success(data=False, message=f"目录不存在: {path}")
 
         os.startfile(path)
 
@@ -101,31 +81,15 @@ class AppApi:
 
     def get_app_config(self):
         try:
-            return success(
-                data=load_config()
-            )
+            return success(data=load_config())
         except (ValueError, RuntimeError) as exc:
-            return failure(
-                message=str(exc)
-            )
+            return failure(message=str(exc))
 
-    def save_app_config(
-            self,
-            config: dict[str, Any],
-    ):
+    def save_app_config(self, config: dict[str, Any]):
         try:
             save_config(config)
 
-            return success(
-                data=config
-            )
+            return success(data=config)
 
-        except (
-                TypeError,
-                ValueError,
-                RuntimeError,
-                OSError,
-        ) as exc:
-            return failure(
-                message=str(exc)
-            )
+        except (TypeError, ValueError, RuntimeError, OSError) as exc:
+            return failure(message=str(exc))

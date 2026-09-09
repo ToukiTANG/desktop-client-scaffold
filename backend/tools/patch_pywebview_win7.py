@@ -18,48 +18,31 @@ def main() -> None:
 
     if pywebview_version != EXPECTED_PYWEBVIEW_VERSION:
         raise RuntimeError(
-            f"Unsupported pywebview version: {pywebview_version}. "
-            f"Expected: {EXPECTED_PYWEBVIEW_VERSION}"
+            f"Unsupported pywebview version: {pywebview_version}. Expected: {EXPECTED_PYWEBVIEW_VERSION}"
         )
 
     webview_dir = Path(webview.__file__).resolve().parent
     winforms_file = webview_dir / "platforms" / "winforms.py"
 
     if not winforms_file.is_file():
-        raise FileNotFoundError(
-            f"pywebview winforms.py not found: {winforms_file}"
-        )
+        raise FileNotFoundError(f"pywebview winforms.py not found: {winforms_file}")
 
     source = winforms_file.read_text(encoding="utf-8")
 
     if PATCHED_CODE in source:
-        print(
-            f"pywebview {pywebview_version} Win7 patch already applied"
-        )
+        print(f"pywebview {pywebview_version} Win7 patch already applied")
         return
 
     count = source.count(ORIGINAL_CODE)
 
     if count != 1:
-        raise RuntimeError(
-            "Unable to apply pywebview Win7 patch: "
-            f"expected exactly one target, found {count}"
-        )
+        raise RuntimeError(f"Unable to apply pywebview Win7 patch: expected exactly one target, found {count}")
 
-    source = source.replace(
-        ORIGINAL_CODE,
-        PATCHED_CODE,
-        1,
-    )
+    source = source.replace(ORIGINAL_CODE, PATCHED_CODE, 1)
 
-    winforms_file.write_text(
-        source,
-        encoding="utf-8",
-    )
+    winforms_file.write_text(source, encoding="utf-8")
 
-    print(
-        f"pywebview {pywebview_version} Win7 patch applied successfully"
-    )
+    print(f"pywebview {pywebview_version} Win7 patch applied successfully")
 
 
 if __name__ == "__main__":
