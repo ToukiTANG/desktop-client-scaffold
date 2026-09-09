@@ -1,5 +1,23 @@
 <template>
   <div class="settings-page">
+    <el-card v-if="businessSettingItems.length" class="business-settings-card">
+      <template #header>
+        <span>业务设置</span>
+      </template>
+
+      <div v-for="item in businessSettingItems" :key="item.title" class="setting-item">
+        <div class="setting-info">
+          <div class="setting-title">{{ item.title }}</div>
+          <div v-if="item.description" class="setting-description">
+            {{ item.description }}
+          </div>
+        </div>
+
+        <el-button type="primary" link @click="router.push(item.to)">
+          {{ item.actionLabel }}
+        </el-button>
+      </div>
+    </el-card>
     <el-card>
       <template #header>
         <span>关于</span>
@@ -48,6 +66,11 @@ import { ElMessage } from 'element-plus'
 
 import { getAppInfo, openDirectory } from '@/api/app'
 import type { AppInfo } from '@/types'
+import { useRouter } from 'vue-router'
+
+import { businessSettingItems } from '@/business/settings'
+
+const router = useRouter()
 
 const appInfo = ref<AppInfo>({
   name: '-',
@@ -110,5 +133,30 @@ onMounted(() => {
 .path-text {
   flex: 1;
   word-break: break-all;
+}
+
+.business-settings-card {
+  margin-bottom: 20px;
+}
+
+.setting-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.setting-info {
+  min-width: 0;
+}
+
+.setting-title {
+  font-weight: 500;
+}
+
+.setting-description {
+  margin-top: 6px;
+  color: #909399;
+  font-size: 13px;
 }
 </style>
