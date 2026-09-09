@@ -6,7 +6,9 @@
       </template>
 
       <el-descriptions :column="1" border>
-        <el-descriptions-item label="应用名称"> Desktop Client </el-descriptions-item>
+        <el-descriptions-item label="应用名称">
+          {{ appInfo?.name ?? '-' }}
+        </el-descriptions-item>
 
         <el-descriptions-item label="当前版本">
           {{ appInfo.version }}
@@ -17,13 +19,9 @@
             <span class="path-text">{{ appInfo.dataDir }}</span>
 
             <div class="path-actions">
-              <el-button link type="primary" @click="handleOpenDirectory(appInfo.dataDir)">
-                打开目录
-              </el-button>
+              <el-button link type="primary" @click="handleOpenDirectory(appInfo.dataDir)"> 打开目录 </el-button>
 
-              <el-button link type="primary" @click="handleCopyPath(appInfo.dataDir)">
-                复制路径
-              </el-button>
+              <el-button link type="primary" @click="handleCopyPath(appInfo.dataDir)"> 复制路径 </el-button>
             </div>
           </div>
         </el-descriptions-item>
@@ -33,13 +31,9 @@
             <span class="path-text">{{ appInfo.logDir }}</span>
 
             <div class="path-actions">
-              <el-button link type="primary" @click="handleOpenDirectory(appInfo.logDir)">
-                打开目录
-              </el-button>
+              <el-button link type="primary" @click="handleOpenDirectory(appInfo.logDir)"> 打开目录 </el-button>
 
-              <el-button link type="primary" @click="handleCopyPath(appInfo.logDir)">
-                复制路径
-              </el-button>
+              <el-button link type="primary" @click="handleCopyPath(appInfo.logDir)"> 复制路径 </el-button>
             </div>
           </div>
         </el-descriptions-item>
@@ -56,6 +50,7 @@ import { getAppInfo, openDirectory } from '@/api/app'
 import type { AppInfo } from '@/types'
 
 const appInfo = ref<AppInfo>({
+  name: '-',
   version: '-',
   dataDir: '-',
   logDir: '-',

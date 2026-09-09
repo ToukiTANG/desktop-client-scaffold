@@ -14,6 +14,7 @@ export interface PageResult<T> {
 }
 
 export interface AppInfo {
+  name: string
   version: string
   dataDir: string
   logDir: string

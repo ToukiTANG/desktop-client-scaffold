@@ -7,6 +7,7 @@ from typing import Any
 from business.api_registry import create_business_apis
 from core.app_config import load_config, save_config
 from core.paths import get_data_dir, get_log_dir
+from core.project_config import get_app_name
 from core.response import failure, success
 from core.version import get_app_version
 
@@ -80,6 +81,7 @@ class AppApi:
     def get_app_info(self):
         return success(
             data={
+                "name": get_app_name(),
                 "version": get_app_version(),
                 "dataDir": str(get_data_dir()),
                 "logDir": str(get_log_dir()),
