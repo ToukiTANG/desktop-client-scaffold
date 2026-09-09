@@ -1,11 +1,14 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import MainLayout from '@/layouts/MainLayout.vue'
-import { businessRoutes } from '@/business/routes'
+import { installBusinessRouter } from '@/business/router'
+import { businessRoutes, businessStandaloneRoutes } from '@/business/routes'
 
 const router = createRouter({
   history: createWebHashHistory(),
 
   routes: [
+    ...businessStandaloneRoutes,
+
     {
       path: '/',
       component: MainLayout,
@@ -28,5 +31,7 @@ const router = createRouter({
     },
   ],
 })
+
+installBusinessRouter(router)
 
 export default router
