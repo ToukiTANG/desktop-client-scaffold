@@ -15,6 +15,12 @@
           <el-icon> <HomeFilled /> </el-icon>
           <span>首页</span>
         </el-menu-item>
+        <el-menu-item v-for="item in businessMenuItems" :key="item.index" :index="item.index">
+          <el-icon v-if="item.icon">
+            <component :is="item.icon" />
+          </el-icon>
+          <span>{{ item.label }}</span>
+        </el-menu-item>
       </el-menu>
 
       <div class="sidebar-footer">
@@ -38,11 +44,11 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { HomeFilled, Setting } from '@element-plus/icons-vue'
+import { businessMenuItems } from '@/business/menu'
 
 const route = useRoute()
 
 const activeMenu = computed(() => route.path)
-
 </script>
 
 <style scoped>

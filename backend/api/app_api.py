@@ -4,11 +4,11 @@ import logging
 import os
 from typing import Any
 
+from business.api_registry import create_business_apis
 from core.app_config import load_config, save_config
 from core.paths import get_data_dir, get_log_dir
 from core.response import failure, success
 from core.version import get_app_version
-
 
 logger = logging.getLogger(__name__)
 
@@ -17,8 +17,7 @@ class AppApi:
     def __init__(self):
         self._window = None
 
-        self._apis = {
-        }
+        self._apis = create_business_apis()
 
     def _bind_window(self, window):
         self._window = window
