@@ -1,17 +1,10 @@
+from __future__ import annotations
+
 import os
-import sys
 from pathlib import Path
 
-
-def is_frozen() -> bool:
-    return bool(getattr(sys, "frozen", False))
-
-
-def get_project_root() -> Path:
-    if is_frozen():
-        return Path(sys._MEIPASS)
-
-    return Path(__file__).resolve().parents[2]
+from core.project_config import get_data_dir_name
+from core.runtime_paths import get_project_root, is_frozen
 
 
 def get_backend_root() -> Path:
@@ -29,7 +22,7 @@ def get_data_dir() -> Path:
         if not local_app_data:
             raise RuntimeError("LOCALAPPDATA environment variable is unavailable")
 
-        return Path(local_app_data) / "DesktopClient" / "data"
+        return Path(local_app_data) / get_data_dir_name() / "data"
 
     return get_backend_root() / "data"
 
@@ -41,7 +34,7 @@ def get_log_dir() -> Path:
         if not local_app_data:
             raise RuntimeError("LOCALAPPDATA environment variable is unavailable")
 
-        return Path(local_app_data) / "DesktopClient" / "logs"
+        return Path(local_app_data) / get_data_dir_name() / "logs"
 
     return get_backend_root() / "logs"
 

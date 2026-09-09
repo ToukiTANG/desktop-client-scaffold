@@ -1,4 +1,18 @@
-#define AppName "Desktop Client"
+#ifndef AppName
+  #define AppName "Desktop Client"
+#endif
+
+#ifndef AppId
+  #define AppId "F8A49F6C-8A19-4A0E-9D29-4C8F45A9583E"
+#endif
+
+#ifndef ExecutableName
+  #define ExecutableName "DesktopClient"
+#endif
+
+#ifndef InstallerName
+  #define InstallerName "DesktopClientSetup"
+#endif
 
 #ifndef AppVersion
   #define AppVersion "0.1.0"
@@ -7,19 +21,19 @@
 
 [Setup]
 
-AppId={{F8A49F6C-8A19-4A0E-9D29-4C8F45A9583E}
+AppId={{{#AppId}}
 AppName={#AppName}
 AppVersion={#AppVersion}
 AppVerName={#AppName} {#AppVersion}
 
-DefaultDirName={autopf}\DesktopClient
+DefaultDirName={autopf}\{#ExecutableName}
 DefaultGroupName={#AppName}
 
 OutputDir=..\release
-OutputBaseFilename=DesktopClientSetup-{#AppVersion}
+OutputBaseFilename={#InstallerName}-{#AppVersion}
 
 SetupIconFile=..\backend\build_resources\app.ico
-UninstallDisplayIcon={app}\DesktopClient.exe
+UninstallDisplayIcon={app}\{#ExecutableName}.exe
 
 PrivilegesRequired=admin
 
@@ -44,8 +58,8 @@ RestartApplications=no
 
 [Files]
 
-; Desktop Client
-Source: "..\backend\dist\DesktopClient\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+; Application files
+Source: "..\backend\dist\{#ExecutableName}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; Win7 WebView2 Runtime prerequisite
 ; dontcopy = only extract manually when needed
@@ -59,14 +73,14 @@ Name: "desktopicon"; Description: "创建桌面快捷方式"; GroupDescription: 
 
 [Icons]
 
-Name: "{group}\Desktop Client"; Filename: "{app}\DesktopClient.exe"
+Name: "{group}\{#AppName}"; Filename: "{app}\{#ExecutableName}.exe"
 
-Name: "{autodesktop}\Desktop Client"; Filename: "{app}\DesktopClient.exe"; Tasks: desktopicon
+Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#ExecutableName}.exe"; Tasks: desktopicon
 
 
 [Run]
 
-Filename: "{app}\DesktopClient.exe"; Description: "启动 Desktop Client"; Flags: nowait postinstall skipifsilent; Check: ShouldLaunchApplication
+Filename: "{app}\{#ExecutableName}.exe"; Description: "启动 {#AppName}"; Flags: nowait postinstall skipifsilent; Check: ShouldLaunchApplication
 
 
 [Code]
@@ -269,7 +283,7 @@ begin
       'Microsoft Edge WebView2 Runtime 109 安装失败。'
       + #13#10
       + #13#10
-      + 'Desktop Client 无法在当前 Windows 7 环境中运行。'
+      + '{#AppName} 无法在当前 Windows 7 环境中运行。'
       + #13#10
       + '请检查系统环境或安装日志后重试。';
 
@@ -288,7 +302,7 @@ function ShouldLaunchApplication: Boolean;
 begin
   {
     If Runtime was installed during this setup,
-    do not immediately launch Desktop Client.
+    do not immediately launch the application.
   }
   Result := not WebView2InstalledThisRun;
 end;
@@ -299,7 +313,7 @@ begin
   {
     Conservative Win7 policy:
     if WebView2 Runtime was newly installed,
-    request a reboot after Desktop Client installation.
+    request a reboot after application installation.
   }
   Result :=
     IsWindows7 and

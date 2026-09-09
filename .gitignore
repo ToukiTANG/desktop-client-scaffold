@@ -32,3 +32,13 @@ Thumbs.db
 # Runtime data
 backend/data/*
 !backend/data/.gitkeep
+
+# PyInstaller
+backend/build/
+backend/dist/
+
+# Release artifacts
+release/
+
+# Prerequisites binaries
+prerequisites/*.exe

@@ -5,6 +5,35 @@ $FrontendDir = Join-Path $ProjectRoot "frontend"
 $BackendDir = Join-Path $ProjectRoot "backend"
 $ReleaseDir = Join-Path $ProjectRoot "release"
 
+$ProjectConfigFile = Join-Path $ProjectRoot "project.json"
+
+if (-not (Test-Path $ProjectConfigFile)) {
+    throw "Project config not found: $ProjectConfigFile"
+}
+
+$ProjectConfig = Get-Content $ProjectConfigFile -Raw -Encoding UTF8 | ConvertFrom-Json
+
+$AppName = $ProjectConfig.app_name
+$AppId = $ProjectConfig.app_id
+$ExecutableName = $ProjectConfig.executable_name
+$InstallerName = $ProjectConfig.installer_name
+
+if ([string]::IsNullOrWhiteSpace($AppName)) {
+    throw "Invalid project config: app_name"
+}
+
+if ([string]::IsNullOrWhiteSpace($AppId)) {
+    throw "Invalid project config: app_id"
+}
+
+if ([string]::IsNullOrWhiteSpace($ExecutableName)) {
+    throw "Invalid project config: executable_name"
+}
+
+if ([string]::IsNullOrWhiteSpace($InstallerName)) {
+    throw "Invalid project config: installer_name"
+}
+
 $InstallerScript = Join-Path $ProjectRoot "installer\DesktopClient.iss"
 $WebView2Installer = Join-Path $ProjectRoot "prerequisites\MicrosoftEdge_X64_109.0.1518.140.exe"
 
@@ -12,7 +41,7 @@ $InnoSetupCompiler = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
 
 
 Write-Host "========================================"
-Write-Host " Desktop Client Build"
+Write-Host " $AppName Build"
 Write-Host "========================================"
 
 
@@ -143,7 +172,7 @@ Write-Host "Application version: $Version"
 # ------------------------------------------------------------
 
 Write-Host ""
-Write-Host "[4/8] Building DesktopClient..."
+Write-Host "[4/8] Building $ExecutableName..."
 
 Push-Location $BackendDir
 
@@ -166,8 +195,8 @@ finally {
 Write-Host ""
 Write-Host "[5/8] Preparing release directory..."
 
-$SourceDir = Join-Path $BackendDir "dist\DesktopClient"
-$TargetDir = Join-Path $ReleaseDir "DesktopClient-$Version"
+$SourceDir = Join-Path $BackendDir "dist\$ExecutableName"
+$TargetDir = Join-Path $ReleaseDir "$ExecutableName-$Version"
 
 if (-not (Test-Path $SourceDir)) {
     throw "PyInstaller output directory not found: $SourceDir"
@@ -189,7 +218,7 @@ Copy-Item -Path $SourceDir -Destination $TargetDir -Recurse
 Write-Host ""
 Write-Host "[6/8] Creating ZIP package..."
 
-$ZipFile = Join-Path $ReleaseDir "DesktopClient-$Version.zip"
+$ZipFile = Join-Path $ReleaseDir "$ExecutableName-$Version.zip"
 
 if (Test-Path $ZipFile) {
     Remove-Item -Force $ZipFile
@@ -220,13 +249,19 @@ if (-not (Test-Path $InnoSetupCompiler)) {
     throw "Inno Setup compiler not found: $InnoSetupCompiler"
 }
 
-& $InnoSetupCompiler "/DAppVersion=$Version" $InstallerScript
+& $InnoSetupCompiler `
+    "/DAppVersion=$Version" `
+    "/DAppName=$AppName" `
+    "/DAppId=$AppId" `
+    "/DExecutableName=$ExecutableName" `
+    "/DInstallerName=$InstallerName" `
+    $InstallerScript
 
 if ($LASTEXITCODE -ne 0) {
     throw "Inno Setup build failed"
 }
 
-$SetupFile = Join-Path $ReleaseDir "DesktopClientSetup-$Version.exe"
+$SetupFile = Join-Path $ReleaseDir "$InstallerName-$Version.exe"
 
 if (-not (Test-Path $SetupFile)) {
     throw "Installer output not found: $SetupFile"

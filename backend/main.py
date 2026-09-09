@@ -7,14 +7,15 @@ import webview
 from api.app_api import AppApi
 from core.database import init_database
 from core.logging_config import setup_logging
-from core.paths import get_frontend_dist
+from core.paths import get_frontend_dist, get_log_dir
+from core.project_config import get_app_name
 from core.webview2 import validate_webview2_runtime
 
 DEV_SERVER_URL = "http://127.0.0.1:5173"
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Desktop Client")
+    parser = argparse.ArgumentParser(description=get_app_name())
 
     parser.add_argument("--dev", action="store_true", help="Run application in development mode")
 
@@ -36,7 +37,12 @@ def get_app_url(dev: bool) -> str:
 
 
 def show_startup_error(message: str) -> None:
-    ctypes.windll.user32.MessageBoxW(0, message, "Desktop Client 启动失败", 0x10)
+    ctypes.windll.user32.MessageBoxW(
+        0,
+        message,
+        f"{get_app_name()} 启动失败",
+        0x10,
+    )
 
 
 def main() -> None:
@@ -45,7 +51,7 @@ def main() -> None:
     setup_logging()
 
     logger = logging.getLogger(__name__)
-    logger.info("Desktop Client starting")
+    logger.info("%s starting", get_app_name())
     logger.info("Development mode: %s", args.dev)
 
     try:
@@ -67,7 +73,7 @@ def main() -> None:
         logger.info("Application URL: %s", app_url)
 
         window = webview.create_window(
-            title="Desktop Client",
+            title=get_app_name(),
             url=app_url,
             js_api=api,
             width=1600,
@@ -82,14 +88,16 @@ def main() -> None:
 
         webview.start(gui="edgechromium", debug=args.dev, http_server=not args.dev)
 
-        logger.info("Desktop Client stopped")
+        logger.info("%s stopped", get_app_name())
 
     except Exception:
-        logger.exception("Desktop Client startup failed")
+        logger.exception("%s startup failed", get_app_name())
 
         if not args.dev:
             show_startup_error(
-                "程序启动失败。\n\n详细错误信息已记录到日志文件：\n%LOCALAPPDATA%\\DesktopClient\\logs\\app.log"
+                "程序启动失败。\n\n"
+                "详细错误信息已记录到日志文件：\n"
+                f"{get_log_dir() / 'app.log'}"
             )
 
         raise

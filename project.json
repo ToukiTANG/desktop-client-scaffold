@@ -1,0 +1,8 @@
+{
+  "app_name": "Desktop Client",
+  "app_id": "F8A49F6C-8A19-4A0E-9D29-4C8F45A9583E",
+  "internal_name": "DesktopClient",
+  "executable_name": "DesktopClient",
+  "data_dir_name": "DesktopClient",
+  "installer_name": "DesktopClientSetup"
+}

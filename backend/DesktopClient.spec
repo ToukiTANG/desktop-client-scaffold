@@ -1,5 +1,7 @@
-import tomli
+import json
 from pathlib import Path
+
+import tomli
 
 from PyInstaller.utils.hooks import collect_all
 
@@ -15,7 +17,21 @@ frontend_dist = project_root / "frontend" / "dist"
 alembic_dir = backend_dir / "alembic"
 alembic_ini = backend_dir / "alembic.ini"
 pyproject_file = backend_dir / "pyproject.toml"
+project_config_file = project_root / "project.json"
 icon_file = backend_dir / "build_resources" / "app.ico"
+
+
+# ============================================================
+# Project identity
+# project.json is the single source of truth
+# ============================================================
+
+with project_config_file.open("r", encoding="utf-8") as f:
+    project_config = json.load(f)
+
+app_name = project_config["app_name"]
+internal_name = project_config["internal_name"]
+executable_name = project_config["executable_name"]
 
 
 # ============================================================
@@ -62,12 +78,11 @@ version_file.write_text(
                 StringTable(
                     "080404B0",
                     [
-                        StringStruct("CompanyName", ""),
-                        StringStruct("FileDescription", "Desktop Client"),
+                        StringStruct("FileDescription", "{app_name}"),
                         StringStruct("FileVersion", "{app_version}"),
-                        StringStruct("InternalName", "DesktopClient"),
-                        StringStruct("OriginalFilename", "DesktopClient.exe"),
-                        StringStruct("ProductName", "Desktop Client"),
+                        StringStruct("InternalName", "{internal_name}"),
+                        StringStruct("OriginalFilename", "{executable_name}.exe"),
+                        StringStruct("ProductName", "{app_name}"),
                         StringStruct("ProductVersion", "{app_version}"),
                     ],
                 )
@@ -94,6 +109,7 @@ datas = [
     (str(alembic_dir), "backend/alembic"),
     (str(alembic_ini), "backend"),
     (str(pyproject_file), "backend"),
+    (str(project_config_file), "."),
 ]
 
 binaries = []
@@ -162,7 +178,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name="DesktopClient",
+    name=executable_name,
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -184,5 +200,5 @@ coll = COLLECT(
     strip=False,
     upx=False,
     upx_exclude=[],
-    name="DesktopClient",
+    name=executable_name,
 )
