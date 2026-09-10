@@ -1,22 +1,75 @@
 $ErrorActionPreference = "Stop"
 
+Set-StrictMode -Version 2.0
+
+
+# ------------------------------------------------------------
+# Paths
+# ------------------------------------------------------------
+
 $ProjectRoot = $PSScriptRoot
+
 $FrontendDir = Join-Path $ProjectRoot "frontend"
 $BackendDir = Join-Path $ProjectRoot "backend"
 $ReleaseDir = Join-Path $ProjectRoot "release"
 
 $ProjectConfigFile = Join-Path $ProjectRoot "project.json"
 
-if (-not (Test-Path $ProjectConfigFile)) {
-    throw "Project config not found: $ProjectConfigFile"
+$InstallerScript = Join-Path $ProjectRoot "installer\DesktopClient.iss"
+$PyInstallerSpec = Join-Path $BackendDir "DesktopClient.spec"
+
+$Win7WebView2Installer = Join-Path $ProjectRoot "prerequisites\MicrosoftEdge_X64_109.0.1518.140.exe"
+$EvergreenWebView2Installer = Join-Path $ProjectRoot "prerequisites\MicrosoftEdgeWebView2RuntimeInstallerX64.exe"
+
+$InnoSetupCompiler = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+
+
+# ------------------------------------------------------------
+# Helpers
+# ------------------------------------------------------------
+
+function Assert-FileExists {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$Path,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Description
+    )
+
+    if (-not (Test-Path $Path -PathType Leaf)) {
+        throw "$Description not found: $Path"
+    }
 }
+
+
+function Assert-DirectoryExists {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$Path,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Description
+    )
+
+    if (-not (Test-Path $Path -PathType Container)) {
+        throw "$Description not found: $Path"
+    }
+}
+
+
+# ------------------------------------------------------------
+# Load project configuration
+# ------------------------------------------------------------
+
+Assert-FileExists $ProjectConfigFile "Project config"
 
 $ProjectConfig = Get-Content $ProjectConfigFile -Raw -Encoding UTF8 | ConvertFrom-Json
 
-$AppName = $ProjectConfig.app_name
-$AppId = $ProjectConfig.app_id
-$ExecutableName = $ProjectConfig.executable_name
-$InstallerName = $ProjectConfig.installer_name
+$AppName = [string]$ProjectConfig.app_name
+$AppId = [string]$ProjectConfig.app_id
+$ExecutableName = [string]$ProjectConfig.executable_name
+$InstallerName = [string]$ProjectConfig.installer_name
 
 if ([string]::IsNullOrWhiteSpace($AppName)) {
     throw "Invalid project config: app_name"
@@ -34,23 +87,49 @@ if ([string]::IsNullOrWhiteSpace($InstallerName)) {
     throw "Invalid project config: installer_name"
 }
 
-$InstallerScript = Join-Path $ProjectRoot "installer\DesktopClient.iss"
-$WebView2Installer = Join-Path $ProjectRoot "prerequisites\MicrosoftEdge_X64_109.0.1518.140.exe"
 
-$InnoSetupCompiler = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
-
-
+Write-Host ""
 Write-Host "========================================"
 Write-Host " $AppName Build"
 Write-Host "========================================"
 
 
 # ------------------------------------------------------------
-# 0. Validate Python environment
+# 0. Validate build prerequisites
 # ------------------------------------------------------------
 
 Write-Host ""
-Write-Host "[0/8] Validating Python environment..."
+Write-Host "[0/9] Validating build prerequisites..."
+
+Assert-DirectoryExists $FrontendDir "Frontend directory"
+Assert-DirectoryExists $BackendDir "Backend directory"
+
+Assert-FileExists $PyInstallerSpec "PyInstaller spec"
+Assert-FileExists $InstallerScript "Inno Setup script"
+
+Assert-FileExists `
+    $Win7WebView2Installer `
+    "Win7 WebView2 Runtime 109 prerequisite"
+
+Assert-FileExists `
+    $EvergreenWebView2Installer `
+    "WebView2 Evergreen Runtime prerequisite"
+
+Assert-FileExists `
+    $InnoSetupCompiler `
+    "Inno Setup compiler"
+
+Write-Host "Win7 WebView2     : $Win7WebView2Installer"
+Write-Host "Evergreen WebView2: $EvergreenWebView2Installer"
+Write-Host "Inno Setup        : $InnoSetupCompiler"
+
+
+# ------------------------------------------------------------
+# 1. Validate Python environment
+# ------------------------------------------------------------
+
+Write-Host ""
+Write-Host "[1/9] Validating Python environment..."
 
 Push-Location $BackendDir
 
@@ -101,11 +180,32 @@ finally {
 
 
 # ------------------------------------------------------------
-# 1. Apply pywebview Win7 compatibility patch
+# 2. Check backend code
 # ------------------------------------------------------------
 
 Write-Host ""
-Write-Host "[1/8] Applying pywebview Win7 compatibility patch..."
+Write-Host "[2/9] Checking backend..."
+
+Push-Location $BackendDir
+
+try {
+    uv run ruff check .
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "Backend Ruff check failed"
+    }
+}
+finally {
+    Pop-Location
+}
+
+
+# ------------------------------------------------------------
+# 3. Apply pywebview Win7 compatibility patch
+# ------------------------------------------------------------
+
+Write-Host ""
+Write-Host "[3/9] Applying pywebview Win7 compatibility patch..."
 
 Push-Location $BackendDir
 
@@ -122,15 +222,21 @@ finally {
 
 
 # ------------------------------------------------------------
-# 2. Build frontend
+# 4. Check and build frontend
 # ------------------------------------------------------------
 
 Write-Host ""
-Write-Host "[2/8] Building frontend..."
+Write-Host "[4/9] Checking and building frontend..."
 
 Push-Location $FrontendDir
 
 try {
+    npm run type-check
+
+    if ($LASTEXITCODE -ne 0) {
+        throw "Frontend type check failed"
+    }
+
     npm run build
 
     if ($LASTEXITCODE -ne 0) {
@@ -143,11 +249,11 @@ finally {
 
 
 # ------------------------------------------------------------
-# 3. Read application version
+# 5. Read application version
 # ------------------------------------------------------------
 
 Write-Host ""
-Write-Host "[3/8] Reading application version..."
+Write-Host "[5/9] Reading application version..."
 
 Push-Location $BackendDir
 
@@ -159,6 +265,10 @@ try {
     }
 
     $Version = $Version.Trim()
+
+    if ([string]::IsNullOrWhiteSpace($Version)) {
+        throw "Application version is empty"
+    }
 }
 finally {
     Pop-Location
@@ -168,11 +278,11 @@ Write-Host "Application version: $Version"
 
 
 # ------------------------------------------------------------
-# 4. Build application with PyInstaller
+# 6. Build application with PyInstaller
 # ------------------------------------------------------------
 
 Write-Host ""
-Write-Host "[4/8] Building $ExecutableName..."
+Write-Host "[6/9] Building $ExecutableName..."
 
 Push-Location $BackendDir
 
@@ -189,65 +299,51 @@ finally {
 
 
 # ------------------------------------------------------------
-# 5. Prepare release directory
+# 7. Prepare release directory and ZIP package
 # ------------------------------------------------------------
 
 Write-Host ""
-Write-Host "[5/8] Preparing release directory..."
+Write-Host "[7/9] Preparing release package..."
 
 $SourceDir = Join-Path $BackendDir "dist\$ExecutableName"
 $TargetDir = Join-Path $ReleaseDir "$ExecutableName-$Version"
+$ZipFile = Join-Path $ReleaseDir "$ExecutableName-$Version.zip"
 
-if (-not (Test-Path $SourceDir)) {
+if (-not (Test-Path $SourceDir -PathType Container)) {
     throw "PyInstaller output directory not found: $SourceDir"
 }
 
 New-Item -ItemType Directory -Force $ReleaseDir | Out-Null
 
 if (Test-Path $TargetDir) {
-    Remove-Item -Recurse -Force $TargetDir
+    Remove-Item $TargetDir -Recurse -Force
 }
-
-Copy-Item -Path $SourceDir -Destination $TargetDir -Recurse
-
-
-# ------------------------------------------------------------
-# 6. Create ZIP package
-# ------------------------------------------------------------
-
-Write-Host ""
-Write-Host "[6/8] Creating ZIP package..."
-
-$ZipFile = Join-Path $ReleaseDir "$ExecutableName-$Version.zip"
 
 if (Test-Path $ZipFile) {
-    Remove-Item -Force $ZipFile
+    Remove-Item $ZipFile -Force
 }
+
+Copy-Item `
+    -Path $SourceDir `
+    -Destination $TargetDir `
+    -Recurse
 
 Compress-Archive `
     -Path $TargetDir `
     -DestinationPath $ZipFile `
     -CompressionLevel Optimal
 
+if (-not (Test-Path $ZipFile -PathType Leaf)) {
+    throw "ZIP package was not created: $ZipFile"
+}
+
 
 # ------------------------------------------------------------
-# 7. Build Inno Setup installer
+# 8. Build Inno Setup installer
 # ------------------------------------------------------------
 
 Write-Host ""
-Write-Host "[7/8] Building installer..."
-
-if (-not (Test-Path $InstallerScript)) {
-    throw "Inno Setup script not found: $InstallerScript"
-}
-
-if (-not (Test-Path $WebView2Installer)) {
-    throw "WebView2 Runtime prerequisite not found: $WebView2Installer"
-}
-
-if (-not (Test-Path $InnoSetupCompiler)) {
-    throw "Inno Setup compiler not found: $InnoSetupCompiler"
-}
+Write-Host "[8/9] Building installer..."
 
 & $InnoSetupCompiler `
     "/DAppVersion=$Version" `
@@ -263,25 +359,26 @@ if ($LASTEXITCODE -ne 0) {
 
 $SetupFile = Join-Path $ReleaseDir "$InstallerName-$Version.exe"
 
-if (-not (Test-Path $SetupFile)) {
+if (-not (Test-Path $SetupFile -PathType Leaf)) {
     throw "Installer output not found: $SetupFile"
 }
 
 
 # ------------------------------------------------------------
-# 8. Done
+# 9. Done
 # ------------------------------------------------------------
 
 Write-Host ""
-Write-Host "[8/8] Build completed"
+Write-Host "[9/9] Build completed"
 
 Write-Host ""
 Write-Host "========================================"
 Write-Host " Build completed successfully"
 Write-Host "========================================"
 Write-Host ""
-Write-Host "Version   : $Version"
-Write-Host "Directory : $TargetDir"
-Write-Host "ZIP       : $ZipFile"
-Write-Host "Installer : $SetupFile"
+Write-Host "Application : $AppName"
+Write-Host "Version     : $Version"
+Write-Host "Directory   : $TargetDir"
+Write-Host "ZIP         : $ZipFile"
+Write-Host "Installer   : $SetupFile"
 Write-Host ""
