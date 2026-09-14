@@ -171,10 +171,6 @@ const activeMenu = computed(() => route.path)
   min-width: 0;
   min-height: 0;
 
-  overflow: auto;
-
-  padding: 12px;
-
-  box-sizing: border-box;
+  overflow: hidden;
 }
 </style>
