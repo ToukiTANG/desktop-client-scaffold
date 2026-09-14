@@ -6,27 +6,58 @@
       <div class="sidebar-header">
         <div class="logo">D</div>
 
-        <span class="app-name"> Desktop Tool </span>
+        <span class="app-name">Desktop Tool</span>
       </div>
 
       <!-- 主菜单 -->
       <el-menu class="sidebar-menu" :default-active="activeMenu" router>
         <el-menu-item index="/">
-          <el-icon> <HomeFilled /> </el-icon>
+          <el-icon>
+            <HomeFilled />
+          </el-icon>
+
           <span>首页</span>
         </el-menu-item>
-        <el-menu-item v-for="item in businessMenuItems" :key="item.index" :index="item.index">
-          <el-icon v-if="item.icon">
-            <component :is="item.icon" />
-          </el-icon>
-          <span>{{ item.label }}</span>
-        </el-menu-item>
+
+        <template v-for="item in menuItems" :key="item.index">
+          <!-- 带子菜单 -->
+          <el-sub-menu v-if="item.children?.length" :index="item.index">
+            <template #title>
+              <el-icon v-if="item.icon">
+                <component :is="item.icon" />
+              </el-icon>
+
+              <span>{{ item.label }}</span>
+            </template>
+
+            <el-menu-item v-for="child in item.children" :key="child.index" :index="child.index">
+              <el-icon v-if="child.icon">
+                <component :is="child.icon" />
+              </el-icon>
+
+              <span>{{ child.label }}</span>
+            </el-menu-item>
+          </el-sub-menu>
+
+          <!-- 普通菜单 -->
+          <el-menu-item v-else :index="item.index">
+            <el-icon v-if="item.icon">
+              <component :is="item.icon" />
+            </el-icon>
+
+            <span>{{ item.label }}</span>
+          </el-menu-item>
+        </template>
       </el-menu>
 
+      <!-- 底部设置 -->
       <div class="sidebar-footer">
         <el-menu :default-active="activeMenu" router>
           <el-menu-item index="/settings">
-            <el-icon> <Setting /> </el-icon>
+            <el-icon>
+              <Setting />
+            </el-icon>
+
             <span>设置</span>
           </el-menu-item>
         </el-menu>
@@ -42,11 +73,15 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
 import { HomeFilled, Setting } from '@element-plus/icons-vue'
+import { useRoute } from 'vue-router'
+
 import { businessMenuItems } from '@/business/menu'
+import type { AppMenuItem } from '@/types/navigation'
 
 const route = useRoute()
+
+const menuItems: AppMenuItem[] = businessMenuItems
 
 const activeMenu = computed(() => route.path)
 </script>
@@ -106,6 +141,10 @@ const activeMenu = computed(() => route.path)
 
   font-size: 16px;
   font-weight: 600;
+}
+
+.app-name {
+  margin-left: 8px;
 }
 
 .sidebar-menu {
