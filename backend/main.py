@@ -1,6 +1,7 @@
 import argparse
 import ctypes
 import logging
+from ctypes import wintypes
 
 import webview
 
@@ -40,6 +41,17 @@ def show_startup_error(message: str) -> None:
     ctypes.windll.user32.MessageBoxW(0, message, f"{get_app_name()} 启动失败", 0x10)
 
 
+def maximize_window(window: webview.Window) -> None:
+    # PyWebView 4.2.2 has no maximize API; use its WinForms handle after showing.
+    from webview.platforms.winforms import BrowserView
+
+    native_window = BrowserView.instances[window.uid]
+    show_window = ctypes.windll.user32.ShowWindowAsync
+    show_window.argtypes = [wintypes.HWND, ctypes.c_int]
+    show_window.restype = wintypes.BOOL
+    show_window(native_window.Handle.ToInt64(), 3)  # SW_MAXIMIZE preserves the native title bar.
+
+
 def main() -> None:
     args = parse_args()
 
@@ -68,9 +80,19 @@ def main() -> None:
         logger.info("Application URL: %s", app_url)
 
         window = webview.create_window(
-            title=get_app_name(), url=app_url, js_api=api, width=1600, height=900, min_size=(900, 600), text_select=True
+            title=get_app_name(),
+            url=app_url,
+            js_api=api,
+            width=1600,
+            height=900,
+            min_size=(900, 600),
+            resizable=True,
+            fullscreen=False,
+            frameless=False,
+            text_select=True,
         )
 
+        window.events.shown += lambda: maximize_window(window)
         api._bind_window(window)
 
         logger.info("Starting PyWebView")
