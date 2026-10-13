@@ -940,3 +940,19 @@ Git 历史连续
 Scaffold 可独立运行
 业务项目可持续合并 Scaffold 更新
 ```
+
+
+## DPI 启动兼容
+
+应用在创建窗口前，通过 `backend/core/windows_dpi.py` 的
+`configure_dpi_awareness()` 配置 DPI 感知。Windows 8.1 及以上优先使用现代接口；
+Windows 7 缺少 `shcore` 时，回退到 `user32.SetProcessDPIAware`。
+
+兼容处理捕获 `OSError`（包括打包后的 `PyInstallerImportError`）和
+`AttributeError`。DPI 配置失败只记录日志，不阻断应用启动。
+
+业务项目应使用这项公共能力，不要再额外直接调用 `ctypes.windll.shcore`。
+同步脚手架更新时，需要移除业务项目中原有的直接 DPI 调用，否则旧调用仍可能
+导致 Windows 7 启动失败。
+
+在 `backend` 目录运行回归测试：`python -m unittest discover -s tests`。

@@ -11,6 +11,7 @@ from core.logging_config import setup_logging
 from core.paths import get_frontend_dist, get_log_dir
 from core.project_config import get_app_name
 from core.webview2 import validate_webview2_runtime
+from core.windows_dpi import configure_dpi_awareness
 
 DEV_SERVER_URL = "http://127.0.0.1:5173"
 
@@ -42,14 +43,14 @@ def show_startup_error(message: str) -> None:
 
 
 def maximize_window(window: webview.Window) -> None:
-    # PyWebView 4.2.2 has no maximize API; use its WinForms handle after showing.
+    # PyWebView 4.2.2 没有最大化 API，在窗口显示后使用 WinForms 句柄最大化。
     from webview.platforms.winforms import BrowserView
 
     native_window = BrowserView.instances[window.uid]
     show_window = ctypes.windll.user32.ShowWindowAsync
     show_window.argtypes = [wintypes.HWND, ctypes.c_int]
     show_window.restype = wintypes.BOOL
-    show_window(native_window.Handle.ToInt64(), 3)  # SW_MAXIMIZE preserves the native title bar.
+    show_window(native_window.Handle.ToInt64(), 3)  # SW_MAXIMIZE：标准最大化，保留系统标题栏。
 
 
 def main() -> None:
@@ -78,6 +79,8 @@ def main() -> None:
         app_url = get_app_url(dev=args.dev)
 
         logger.info("Application URL: %s", app_url)
+
+        configure_dpi_awareness()
 
         window = webview.create_window(
             title=get_app_name(),
