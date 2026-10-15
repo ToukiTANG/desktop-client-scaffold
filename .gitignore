@@ -42,3 +42,6 @@ release/
 
 # Prerequisites binaries
 prerequisites/*.exe
+
+# Precompiled installer runtime probe
+/installer/WebView2Probe.exe

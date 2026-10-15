@@ -73,7 +73,8 @@ Source: "..\prerequisites\MicrosoftEdge_X64_109.0.1518.140.exe"; Flags: dontcopy
  ; .NET 4.8 离线包：缺少 4.6.2 及以上完整版本时安装，不依赖外网。
 Source: "..\prerequisites\NDP48-x86-x64-AllOS-ENU.exe"; Flags: dontcopy
 ; 从本次应用打包产物提取同一套 x64 加载器，避免版本与程序不一致。
-Source: "check_webview2.ps1"; Flags: dontcopy
+Source: "WebView2Probe.exe"; Flags: dontcopy
+Source: "WebView2Probe.exe.config"; Flags: dontcopy
 Source: "..\backend\dist\{#ExecutableName}\_internal\webview\lib\runtimes\win-x64\native\WebView2Loader.dll"; DestName: "RuntimeProbeLoader.dll"; Flags: dontcopy
 
 ; Windows 10 / Windows 11 / Server 2016+:
@@ -114,6 +115,7 @@ const
 var
   Win7WebView2InstalledThisRun: Boolean;
   RuntimeRestartRequired: Boolean;
+  RuntimeProbeFailed: Boolean;
 
   WebView2ProgressPage: TOutputMarqueeProgressWizardPage;
   WebView2ProgressVisible: Boolean;
@@ -143,6 +145,7 @@ procedure InitializeWizard;
 begin
   Win7WebView2InstalledThisRun := False;
   RuntimeRestartRequired := False;
+  RuntimeProbeFailed := False;
   WebView2ProgressVisible := False;
 
   WebView2ProgressPage :=
@@ -228,8 +231,22 @@ end;
 function GetBinaryType(const ApplicationName: String; var BinaryType: Cardinal): Boolean;
   external 'GetBinaryTypeW@kernel32.dll stdcall';
 
+procedure SaveSetupLog;
+var SourcePath, TargetPath: String;
+begin
+  SourcePath := ExpandConstant('{log}');
+  TargetPath := RuntimeLogDirectory + '\Setup.log';
+  if (SourcePath <> '') and (CompareText(SourcePath, TargetPath) <> 0) then
+    if not FileCopy(SourcePath, TargetPath, False) then Log('Cannot copy setup log to ' + TargetPath);
+end;
+
+procedure DeinitializeSetup;
+begin
+  SaveSetupLog;
+end;
+
 function IsRuntimeX64AndLoadable(const RuntimeFolder: String; const Version: String): Boolean;
-var BinaryType: Cardinal; Code: Integer; ShellPath, ReportPath: String; Report: AnsiString;
+var BinaryType: Cardinal; Code: Integer; ReportPath: String; Report: AnsiString;
 begin
   Result := False;
   if not GetBinaryType(RuntimeFolder + '\msedgewebview2.exe', BinaryType) then begin
@@ -238,19 +255,23 @@ begin
   if BinaryType <> 6 then begin
     Log('WebView2 runtime is not x64: ' + RuntimeFolder); Exit;
   end;
-  ExtractTemporaryFile('check_webview2.ps1');
+  { 预编译的 .NET 4 x64 检测工具，不依赖客户电脑上的 PowerShell 或编译器。 }
+  ExtractTemporaryFile('WebView2Probe.exe');
+  ExtractTemporaryFile('WebView2Probe.exe.config');
   ExtractTemporaryFile('RuntimeProbeLoader.dll');
-  { Inno Setup 进程的位数不能用于验证 x64 DLL，明确调用 64 位 PowerShell。 }
-  if IsWin64 then ShellPath := ExpandConstant('{sysnative}\WindowsPowerShell\v1.0\powershell.exe')
-  else ShellPath := ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe');
   ReportPath := RuntimeLogDirectory + '\WebView2Probe.txt';
-  if not Exec(ShellPath, '-NoProfile -ExecutionPolicy Bypass -File "' + ExpandConstant('{tmp}\check_webview2.ps1') +
-    '" -LoaderPath "' + ExpandConstant('{tmp}\RuntimeProbeLoader.dll') + '" -RuntimeFolder "' + RuntimeFolder +
-    '" -ResultPath "' + ReportPath + '" -ExpectedVersion "' + Version + '"', '', SW_HIDE, ewWaitUntilTerminated, Code) then begin
-    Log('Cannot start x64 WebView2 runtime probe'); Exit;
+  DeleteFile(ReportPath);
+  if not Exec(ExpandConstant('{tmp}\WebView2Probe.exe'),
+    '"' + ExpandConstant('{tmp}\RuntimeProbeLoader.dll') + '" "' + RuntimeFolder +
+    '" "' + ReportPath + '" "' + Version + '"', '', SW_HIDE, ewWaitUntilTerminated, Code) then begin
+    RuntimeProbeFailed := True;
+    Log('Cannot start precompiled x64 WebView2 probe'); Exit;
   end;
-  if LoadStringFromFile(ReportPath, Report) then Log('WebView2 native probe: ' + UTF8Decode(Report));
-  Result := Code = 0;
+  if LoadStringFromFile(ReportPath, Report) then Log('WebView2 native probe: ' + UTF8Decode(Report))
+  else RuntimeProbeFailed := True;
+  if (Code <> 0) and (Code <> 1) then RuntimeProbeFailed := True;
+  Log(Format('WebView2 probe exit=%d; probe failure=%d', [Code, Ord(RuntimeProbeFailed)]));
+  Result := (Code = 0) and not RuntimeProbeFailed;
 end;
 
 { ============================================================ }
@@ -668,8 +689,9 @@ end;
 function RepairWin7WebView2: Boolean;
 begin
   { 先尝试安装/升级，不能只根据安装器退出码判定修复完成。 }
+  if RuntimeProbeFailed then begin Result := False; Exit; end;
   Result := InstallWebView2Runtime109;
-  if Result then Exit;
+  if Result or RuntimeProbeFailed then Exit;
   if not WizardSilent then
     if MsgBox('现有 WebView2 运行环境不兼容或损坏，安装程序需要卸载该共享组件后重新安装 109 x64。' + #13#10 +
       '请关闭其他使用 WebView2 的软件。替换可能影响其他软件，是否继续？', mbConfirmation, MB_YESNO) <> IDYES then Exit;
@@ -797,10 +819,12 @@ var
   Version: String;
 begin
   Result := '';
+  RuntimeProbeFailed := False;
 
   { PrepareToInstall 可能重试，已需要重启的状态不能被重置。 }
   if not EnsureNetFramework then begin
     Result := '.NET Framework 4.8 安装或验证失败。请检查系统补丁和安装日志：' + RuntimeLogDirectory + '\DotNet48.txt';
+    if Result <> '' then SaveSetupLog;
     Exit;
   end;
 
@@ -851,7 +875,8 @@ begin
           'Skipping Evergreen Runtime installation'
         );
 
-        Exit;
+        if Result <> '' then SaveSetupLog;
+    Exit;
       end;
 
     end
@@ -887,13 +912,15 @@ begin
         + #13#10
         + '请检查安装日志：' + RuntimeLogDirectory + #13#10 + '以及 C:\Windows\Temp\msedge_installer.log。';
 
-      Exit;
+      if Result <> '' then SaveSetupLog;
+    Exit;
     end;
 
     Log(
       'WebView2 Evergreen Runtime installed successfully'
     );
 
+    if Result <> '' then SaveSetupLog;
     Exit;
   end;
 
@@ -921,6 +948,7 @@ begin
       + Version
     );
 
+    if Result <> '' then SaveSetupLog;
     Exit;
   end;
 
@@ -939,6 +967,12 @@ begin
 
   if not RepairWin7WebView2 then
   begin
+    if RuntimeProbeFailed then begin
+      Result := 'WebView2 环境检测工具执行失败，尚不能判断运行时是否正常。' + #13#10 +
+        '请勿反复重装运行环境。请提供此目录中的 Setup.log 和 WebView2Probe.txt：' + RuntimeLogDirectory;
+      SaveSetupLog;
+      Exit;
+    end;
     Result :=
       'Microsoft Edge WebView2 Runtime 109 安装失败。'
       + #13#10
@@ -948,6 +982,7 @@ begin
       + #13#10
       + '请检查安装日志：' + RuntimeLogDirectory + #13#10 + '以及 C:\Windows\Temp\msedge_installer.log。';
 
+    if Result <> '' then SaveSetupLog;
     Exit;
   end;
 

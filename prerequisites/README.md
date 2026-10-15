@@ -11,3 +11,5 @@
 环境子安装程序返回 3010/1641 时记录需要重启；Win7 新安装 WebView2 后也要求重启，不直接启动软件。缺少系统补丁、运行时正在使用或安装失败时保留错误和日志，不自动重启、不强制终止其他软件。
 
 安装器诊断与 .NET 日志在 `%ProgramData%\应用可执行名称\InstallerLogs`，WebView2 官方安装日志通常在 `%WINDIR%\Temp\msedge_installer.log`。启动阶段也验证 .NET 和官方加载器，避免仅凭注册表版本号进入白屏。
+
+环境检测工具在构建时预编译为 .NET 4 x64 程序，Win7 无需 PowerShell 动态编译。检测工具故障会单独报错并停止自动替换；主安装日志会复制到上述日志目录的 `Setup.log`，检测报告为 `WebView2Probe.txt`。

@@ -128,6 +128,13 @@ Write-Host ".NET Framework 4.8: $NetFrameworkInstaller"
 Write-Host "Inno Setup        : $InnoSetupCompiler"
 
 
+# 预编译环境检测工具，Win7 安装过程中不再调用 PowerShell 动态编译。
+$ProbeCompiler = Join-Path $env:WINDIR "Microsoft.NET\Framework64\v4.0.30319\csc.exe"
+$ProbeOutput = Join-Path $ProjectRoot "installer\WebView2Probe.exe"
+Assert-FileExists $ProbeCompiler ".NET Framework C# compiler"
+& $ProbeCompiler /nologo /target:exe /platform:x64 /optimize+ "/out:$ProbeOutput" (Join-Path $ProjectRoot "installer\WebView2Probe.cs")
+if ($LASTEXITCODE -ne 0) { throw "WebView2 probe compilation failed" }
+
 # ------------------------------------------------------------
 # 1. Validate Python environment
 # ------------------------------------------------------------
@@ -235,13 +242,13 @@ Write-Host "[4/9] Checking and building frontend..."
 Push-Location $FrontendDir
 
 try {
-    npm run type-check
+    npm.cmd run type-check
 
     if ($LASTEXITCODE -ne 0) {
         throw "Frontend type check failed"
     }
 
-    npm run build
+    npm.cmd run build
 
     if ($LASTEXITCODE -ne 0) {
         throw "Frontend build failed"
@@ -318,6 +325,15 @@ if (-not (Test-Path $SourceDir -PathType Container)) {
 }
 
 New-Item -ItemType Directory -Force $ReleaseDir | Out-Null
+
+# 删除旧产物前验证绝对路径，避免配置错误指向发布目录以外。
+$ReleaseRoot = [IO.Path]::GetFullPath($ReleaseDir).TrimEnd('\') + '\'
+if (-not [IO.Path]::GetFullPath($TargetDir).StartsWith($ReleaseRoot, [StringComparison]::OrdinalIgnoreCase)) {
+    throw "Release target is outside release directory: $TargetDir"
+}
+if (-not [IO.Path]::GetFullPath($ZipFile).StartsWith($ReleaseRoot, [StringComparison]::OrdinalIgnoreCase)) {
+    throw "ZIP target is outside release directory: $ZipFile"
+}
 
 if (Test-Path $TargetDir) {
     Remove-Item $TargetDir -Recurse -Force
