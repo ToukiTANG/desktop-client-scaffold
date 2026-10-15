@@ -1,4 +1,4 @@
-$ErrorActionPreference = "Stop"
+﻿$ErrorActionPreference = "Stop"
 
 Set-StrictMode -Version 2.0
 
@@ -19,6 +19,7 @@ $InstallerScript = Join-Path $ProjectRoot "installer\DesktopClient.iss"
 $PyInstallerSpec = Join-Path $BackendDir "DesktopClient.spec"
 
 $Win7WebView2Installer = Join-Path $ProjectRoot "prerequisites\MicrosoftEdge_X64_109.0.1518.140.exe"
+$NetFrameworkInstaller = Join-Path $ProjectRoot "prerequisites\NDP48-x86-x64-AllOS-ENU.exe"
 $EvergreenWebView2Installer = Join-Path $ProjectRoot "prerequisites\MicrosoftEdgeWebView2RuntimeInstallerX64.exe"
 
 $InnoSetupCompiler = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
@@ -115,12 +116,15 @@ Assert-FileExists `
     $EvergreenWebView2Installer `
     "WebView2 Evergreen Runtime prerequisite"
 
+Assert-FileExists $NetFrameworkInstaller ".NET Framework 4.8 offline prerequisite"
+
 Assert-FileExists `
     $InnoSetupCompiler `
     "Inno Setup compiler"
 
 Write-Host "Win7 WebView2     : $Win7WebView2Installer"
 Write-Host "Evergreen WebView2: $EvergreenWebView2Installer"
+Write-Host ".NET Framework 4.8: $NetFrameworkInstaller"
 Write-Host "Inno Setup        : $InnoSetupCompiler"
 
 

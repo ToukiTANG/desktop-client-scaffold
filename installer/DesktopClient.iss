@@ -1,4 +1,4 @@
-#ifndef AppName
+﻿#ifndef AppName
   #define AppName "Desktop Client"
 #endif
 
@@ -44,6 +44,8 @@ ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 
 PrivilegesRequired=admin
+SetupLogging=yes
+MinVersion=6.1sp1
 
 DisableProgramGroupPage=yes
 
@@ -67,6 +69,12 @@ Source: "..\backend\dist\{#ExecutableName}\*"; DestDir: "{app}"; Flags: ignoreve
 ; Windows 7:
 ; pinned WebView2 Runtime 109
 Source: "..\prerequisites\MicrosoftEdge_X64_109.0.1518.140.exe"; Flags: dontcopy
+
+ ; .NET 4.8 离线包：缺少 4.6.2 及以上完整版本时安装，不依赖外网。
+Source: "..\prerequisites\NDP48-x86-x64-AllOS-ENU.exe"; Flags: dontcopy
+; 从本次应用打包产物提取同一套 x64 加载器，避免版本与程序不一致。
+Source: "check_webview2.ps1"; Flags: dontcopy
+Source: "..\backend\dist\{#ExecutableName}\_internal\webview\lib\runtimes\win-x64\native\WebView2Loader.dll"; DestName: "RuntimeProbeLoader.dll"; Flags: dontcopy
 
 ; Windows 10 / Windows 11 / Server 2016+:
 ; Evergreen Standalone Installer x64
@@ -105,6 +113,7 @@ const
 
 var
   Win7WebView2InstalledThisRun: Boolean;
+  RuntimeRestartRequired: Boolean;
 
   WebView2ProgressPage: TOutputMarqueeProgressWizardPage;
   WebView2ProgressVisible: Boolean;
@@ -133,6 +142,7 @@ end;
 procedure InitializeWizard;
 begin
   Win7WebView2InstalledThisRun := False;
+  RuntimeRestartRequired := False;
   WebView2ProgressVisible := False;
 
   WebView2ProgressPage :=
@@ -173,6 +183,75 @@ begin
   end;
 end;
 
+
+{ .NET 检测与安装；重启由主安装程序统一处理，不让子安装程序直接重启。 }
+function HasRequiredNetFramework: Boolean;
+var Release: Cardinal;
+begin
+  Result := False;
+  Release := 0;
+  if RegQueryDWordValue(HKLM64, 'SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full', 'Release', Release) then
+    Result := Release >= 394802;
+  if not Result then
+    if RegQueryDWordValue(HKLM32, 'SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full', 'Release', Release) then
+      Result := Release >= 394802;
+  Log(Format('.NET Framework minimum release check: %d; ready=%d', [Release, Ord(Result)]));
+end;
+
+function RuntimeLogDirectory: String;
+begin
+  Result := ExpandConstant('{commonappdata}\{#ExecutableName}\InstallerLogs');
+  ForceDirectories(Result);
+end;
+
+function EnsureNetFramework: Boolean;
+var Code: Integer; LogPath: String;
+begin
+  Result := HasRequiredNetFramework;
+  if Result then Exit;
+  LogPath := RuntimeLogDirectory + '\DotNet48.txt';
+  ShowWebView2Progress('正在安装 .NET Framework 4.8...', '缺少界面运行环境，正在安装随软件提供的离线包，请稍候。');
+  try
+    ExtractTemporaryFile('NDP48-x86-x64-AllOS-ENU.exe');
+    if not Exec(ExpandConstant('{tmp}\NDP48-x86-x64-AllOS-ENU.exe'),
+      '/q /norestart /log "' + LogPath + '"', '', SW_HIDE, ewWaitUntilTerminated, Code) then Exit;
+    Log(Format('.NET installer exit code=%d; log=%s', [Code, LogPath]));
+    if (Code <> 0) and (Code <> 3010) and (Code <> 1641) then Exit;
+    if (Code = 3010) or (Code = 1641) then RuntimeRestartRequired := True;
+    Result := HasRequiredNetFramework;
+    if not Result then Log('.NET install returned success but registry verification failed');
+  finally
+    HideWebView2Progress;
+  end;
+end;
+
+function GetBinaryType(const ApplicationName: String; var BinaryType: Cardinal): Boolean;
+  external 'GetBinaryTypeW@kernel32.dll stdcall';
+
+function IsRuntimeX64AndLoadable(const RuntimeFolder: String; const Version: String): Boolean;
+var BinaryType: Cardinal; Code: Integer; ShellPath, ReportPath: String; Report: AnsiString;
+begin
+  Result := False;
+  if not GetBinaryType(RuntimeFolder + '\msedgewebview2.exe', BinaryType) then begin
+    Log('Cannot read WebView2 executable architecture: ' + RuntimeFolder); Exit;
+  end;
+  if BinaryType <> 6 then begin
+    Log('WebView2 runtime is not x64: ' + RuntimeFolder); Exit;
+  end;
+  ExtractTemporaryFile('check_webview2.ps1');
+  ExtractTemporaryFile('RuntimeProbeLoader.dll');
+  { Inno Setup 进程的位数不能用于验证 x64 DLL，明确调用 64 位 PowerShell。 }
+  if IsWin64 then ShellPath := ExpandConstant('{sysnative}\WindowsPowerShell\v1.0\powershell.exe')
+  else ShellPath := ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe');
+  ReportPath := RuntimeLogDirectory + '\WebView2Probe.txt';
+  if not Exec(ShellPath, '-NoProfile -ExecutionPolicy Bypass -File "' + ExpandConstant('{tmp}\check_webview2.ps1') +
+    '" -LoaderPath "' + ExpandConstant('{tmp}\RuntimeProbeLoader.dll') + '" -RuntimeFolder "' + RuntimeFolder +
+    '" -ResultPath "' + ReportPath + '" -ExpectedVersion "' + Version + '"', '', SW_HIDE, ewWaitUntilTerminated, Code) then begin
+    Log('Cannot start x64 WebView2 runtime probe'); Exit;
+  end;
+  if LoadStringFromFile(ReportPath, Report) then Log('WebView2 native probe: ' + UTF8Decode(Report));
+  Result := Code = 0;
+end;
 
 { ============================================================ }
 { WebView2 version                                            }
@@ -312,6 +391,7 @@ begin
     );
 
     Result := True;
+    if IsWindows7 then Result := IsRuntimeX64AndLoadable(ExtractFileDir(RuntimePath), Version);
   end
   else
   begin
@@ -381,6 +461,7 @@ begin
     );
 
     Result := True;
+    if IsWindows7 then Result := IsRuntimeX64AndLoadable(ExtractFileDir(RuntimePath), Version);
   end
   else
   begin
@@ -556,6 +637,54 @@ begin
 end;
 
 
+{ 不操作任意注册表给出的路径，只使用微软的标准运行时安装目录。 }
+function UninstallIncompatibleRuntime(const RootKey: Integer; const BaseFolder: String; const MachineInstall: Boolean): Boolean;
+var Version, SetupPath, Arguments: String; Code, I: Integer;
+begin
+  Result := True;
+  Code := -1;
+  if not RegQueryStringValue(RootKey, WebView2RegistryKey, 'pv', Version) then Exit;
+  if not IsValidWebView2Version(Version) then Exit;
+  for I := 1 to Length(Version) do
+    if Pos(Version[I], '0123456789.') = 0 then begin Result := False; Exit; end;
+  SetupPath := BaseFolder + '\' + Version + '\Installer\setup.exe';
+  if not FileExists(SetupPath) then begin
+    Log('Cannot automatically uninstall incomplete runtime: ' + SetupPath);
+    Result := False; Exit;
+  end;
+  Arguments := '--uninstall --msedgewebview --force-uninstall --verbose-logging';
+  if MachineInstall then begin
+    Arguments := Arguments + ' --system-level';
+    Result := Exec(SetupPath, Arguments, '', SW_HIDE, ewWaitUntilTerminated, Code);
+  end else begin
+    Arguments := Arguments + ' --user-level';
+    { 用户目录中的卸载器按原用户权限执行，不以管理员权限执行用户可写文件。 }
+    Result := ExecAsOriginalUser(SetupPath, Arguments, '', SW_HIDE, ewWaitUntilTerminated, Code);
+  end;
+  Log(Format('WebView2 uninstall launched=%d; exit=%d; file=%s', [Ord(Result), Code, SetupPath]));
+  Result := Result and (Code = 0);
+end;
+
+function RepairWin7WebView2: Boolean;
+begin
+  { 先尝试安装/升级，不能只根据安装器退出码判定修复完成。 }
+  Result := InstallWebView2Runtime109;
+  if Result then Exit;
+  if not WizardSilent then
+    if MsgBox('现有 WebView2 运行环境不兼容或损坏，安装程序需要卸载该共享组件后重新安装 109 x64。' + #13#10 +
+      '请关闭其他使用 WebView2 的软件。替换可能影响其他软件，是否继续？', mbConfirmation, MB_YESNO) <> IDYES then Exit;
+  ShowWebView2Progress('正在替换不兼容的 WebView2...', '正在卸载原有运行环境并准备重新安装，请稍候。');
+  try
+    Result := UninstallIncompatibleRuntime(HKLM32, ExpandConstant('{pf32}\Microsoft\EdgeWebView\Application'), True);
+    if not Result then Exit;
+    Result := UninstallIncompatibleRuntime(HKCU32, ExpandConstant('{localappdata}\Microsoft\EdgeWebView\Application'), False);
+    if not Result then Exit;
+  finally
+    HideWebView2Progress;
+  end;
+  Result := InstallWebView2Runtime109;
+end;
+
 { ============================================================ }
 { Install Evergreen Runtime for modern Windows                }
 { ============================================================ }
@@ -669,8 +798,11 @@ var
 begin
   Result := '';
 
-  Win7WebView2InstalledThisRun := False;
-
+  { PrepareToInstall 可能重试，已需要重启的状态不能被重置。 }
+  if not EnsureNetFramework then begin
+    Result := '.NET Framework 4.8 安装或验证失败。请检查系统补丁和安装日志：' + RuntimeLogDirectory + '\DotNet48.txt';
+    Exit;
+  end;
 
   { ========================================================== }
   { Windows 10 / Windows 11 / Server 2016+                    }
@@ -753,7 +885,7 @@ begin
         + '{#AppName} 无法正常启动。'
         + #13#10
         + #13#10
-        + '请检查系统环境或安装日志后重试。';
+        + '请检查安装日志：' + RuntimeLogDirectory + #13#10 + '以及 C:\Windows\Temp\msedge_installer.log。';
 
       Exit;
     end;
@@ -805,7 +937,7 @@ begin
     'Installing bundled WebView2 Runtime 109'
   );
 
-  if not InstallWebView2Runtime109 then
+  if not RepairWin7WebView2 then
   begin
     Result :=
       'Microsoft Edge WebView2 Runtime 109 安装失败。'
@@ -814,7 +946,7 @@ begin
       + '{#AppName} 无法在当前 Windows 7 环境中运行。'
       + #13#10
       + #13#10
-      + '请检查系统环境或安装日志后重试。';
+      + '请检查安装日志：' + RuntimeLogDirectory + #13#10 + '以及 C:\Windows\Temp\msedge_installer.log。';
 
     Exit;
   end;
@@ -833,18 +965,10 @@ end;
 
 function ShouldLaunchApplication: Boolean;
 begin
-  {
-    Windows 7:
-
-    If WebView2 Runtime 109 was newly installed,
-    do not immediately launch the application.
-
-    Windows 10+ Evergreen Runtime installations may
-    launch the application immediately.
-  }
+  { 新装 Win7 WebView2 或 .NET 安装要求重启时，完成安装后先重启再运行。 }
 
   Result :=
-    not Win7WebView2InstalledThisRun;
+    not Win7WebView2InstalledThisRun and not RuntimeRestartRequired;
 end;
 
 
@@ -854,21 +978,15 @@ end;
 
 function NeedRestart: Boolean;
 begin
-  {
-    Conservative Windows 7 policy:
-
-    Only request restart when WebView2 Runtime 109
-    was installed during this setup.
-  }
+  { 保留子安装器的重启要求；Win7 新装 WebView2 时也提示重启。 }
 
   Result :=
-    IsWindows7 and
-    Win7WebView2InstalledThisRun;
+    RuntimeRestartRequired or (IsWindows7 and Win7WebView2InstalledThisRun);
 
   if Result then
   begin
     Log(
-      'Restart requested because WebView2 Runtime 109 '
+      'Restart requested because a prerequisite '
       + 'was installed during this setup'
     );
   end;
