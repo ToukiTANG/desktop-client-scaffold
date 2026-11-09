@@ -1,5 +1,6 @@
 <template>
-  <RouterView />
+  <DesktopWindow><RouterView /></DesktopWindow>
 </template>
-
-<style scoped></style>
+<script setup lang="ts">
+import DesktopWindow from '@/components/DesktopWindow.vue'
+</script>

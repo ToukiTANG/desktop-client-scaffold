@@ -7,6 +7,8 @@ declare global {
    * Python AppApi 暴露给前端的方法
    */
   interface AppApi {
+    window_control(action: string, edge?: string): Promise<ApiResponse<{ maximized: boolean }>>
+
     /**
      * 通信测试
      */

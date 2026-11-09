@@ -1,7 +1,6 @@
 import argparse
 import ctypes
 import logging
-from ctypes import wintypes
 
 import webview
 
@@ -11,6 +10,7 @@ from core.logging_config import setup_logging
 from core.paths import get_frontend_dist, get_log_dir
 from core.project_config import get_app_name
 from core.webview2 import validate_webview2_runtime
+from core.window_controls import get_restored_window_size
 from core.windows_dpi import configure_dpi_awareness
 
 DEV_SERVER_URL = "http://127.0.0.1:5173"
@@ -43,14 +43,12 @@ def show_startup_error(message: str) -> None:
 
 
 def maximize_window(window: webview.Window) -> None:
-    # PyWebView 4.2.2 没有最大化 API，在窗口显示后使用 WinForms 句柄最大化。
-    from webview.platforms.winforms import BrowserView
+    from core.window_controls import WindowControls
 
-    native_window = BrowserView.instances[window.uid]
-    show_window = ctypes.windll.user32.ShowWindowAsync
-    show_window.argtypes = [wintypes.HWND, ctypes.c_int]
-    show_window.restype = wintypes.BOOL
-    show_window(native_window.Handle.ToInt64(), 3)  # SW_MAXIMIZE：标准最大化，保留系统标题栏。
+    controls = WindowControls(window)
+    controls.initialize_frame()
+    if not controls.state()["maximized"]:
+        controls.toggle_maximize()
 
 
 def main() -> None:
@@ -81,17 +79,19 @@ def main() -> None:
         logger.info("Application URL: %s", app_url)
 
         configure_dpi_awareness()
+        restored_width, restored_height = get_restored_window_size()
 
         window = webview.create_window(
             title=get_app_name(),
             url=app_url,
             js_api=api,
-            width=1600,
-            height=900,
+            width=restored_width,
+            height=restored_height,
             min_size=(900, 600),
             resizable=True,
             fullscreen=False,
-            frameless=False,
+            frameless=True,
+            easy_drag=False,
             text_select=True,
         )
 

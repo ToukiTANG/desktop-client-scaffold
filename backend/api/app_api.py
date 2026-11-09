@@ -10,6 +10,7 @@ from core.paths import get_data_dir, get_log_dir
 from core.project_config import get_app_name
 from core.response import failure, success
 from core.version import get_app_version
+from core.window_controls import WindowControls
 
 logger = logging.getLogger(__name__)
 
@@ -92,4 +93,20 @@ class AppApi:
             return success(data=config)
 
         except (TypeError, ValueError, RuntimeError, OSError) as exc:
+            return failure(message=str(exc))
+
+    def window_control(self, action: str, edge: str = ""):
+        try:
+            controls = WindowControls(self._window)
+            if action == "state":
+                return success(data=controls.state())
+            if action == "resize":
+                controls.resize(edge)
+            elif action in ("minimize", "toggle_maximize", "close", "move"):
+                getattr(controls, action)()
+            else:
+                return failure(message="无效的窗口操作")
+            return success()
+        except Exception as exc:
+            logger.exception("Window control failed: %s", action)
             return failure(message=str(exc))
